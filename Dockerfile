@@ -42,16 +42,16 @@ RUN cd apps/dashboard && npx next build
 
 # ─── engine-deps (production) ──────────────────────────
 FROM base AS engine-prod-deps
-COPY package.json package-lock.json* ./
 COPY apps/wa-engine/package.json ./apps/wa-engine/
 COPY packages/shared/package.json ./packages/shared/
+WORKDIR /app/apps/wa-engine
 RUN npm install --omit=dev --ignore-scripts --no-audit --no-fund
 
 # ─── dashboard-deps (production) ───────────────────────
 FROM base AS dashboard-prod-deps
-COPY package.json package-lock.json* ./
 COPY apps/dashboard/package.json ./apps/dashboard/
 COPY packages/shared/package.json ./packages/shared/
+WORKDIR /app/apps/dashboard
 RUN npm install --omit=dev --ignore-scripts --no-audit --no-fund
 
 # ─── engine:runtime ────────────────────────────────────
@@ -59,7 +59,8 @@ FROM base AS engine
 WORKDIR /app
 RUN addgroup -g 1001 -S nodejs && adduser -S -u 1001 -G nodejs kontroapi
 
-COPY --from=engine-prod-deps /app/node_modules ./node_modules
+COPY --from=engine-prod-deps /app/apps/wa-engine/node_modules /app/apps/wa-engine/node_modules
+COPY --from=engine-prod-deps /app/packages/shared/node_modules /app/packages/shared/node_modules 2>/dev/null || true
 COPY --from=shared-builder /app/packages/shared ./packages/shared
 COPY --from=engine-builder /app/apps/wa-engine/dist ./apps/wa-engine/dist
 COPY --from=engine-builder /app/apps/wa-engine/schema.sql ./apps/wa-engine/
@@ -81,7 +82,8 @@ FROM base AS dashboard
 WORKDIR /app
 RUN addgroup -g 1001 -S nodejs && adduser -S -u 1001 -G nodejs kontroapi
 
-COPY --from=dashboard-prod-deps /app/node_modules ./node_modules
+COPY --from=dashboard-prod-deps /app/apps/dashboard/node_modules /app/apps/dashboard/node_modules
+COPY --from=dashboard-prod-deps /app/packages/shared/node_modules /app/packages/shared/node_modules 2>/dev/null || true
 COPY --from=shared-builder /app/packages/shared ./packages/shared
 COPY --from=dashboard-builder /app/apps/dashboard/.next/standalone ./
 COPY --from=dashboard-builder /app/apps/dashboard/.next/static ./apps/dashboard/.next/static

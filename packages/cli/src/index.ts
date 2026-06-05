@@ -1,5 +1,8 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { initCommand } from './commands/init.js';
 import { startCommand } from './commands/start.js';
 import { stopCommand } from './commands/stop.js';
@@ -7,12 +10,16 @@ import { statusCommand } from './commands/status.js';
 import { updateCommand } from './commands/update.js';
 import { configCommand } from './commands/config.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const pkg = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8'));
+
 const program = new Command();
 
 program
   .name('kontroapi')
   .description('Self-hostable WhatsApp Business API gateway')
-  .version('0.1.0');
+  .version(pkg.version);
 
 program
   .command('init')
