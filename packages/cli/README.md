@@ -1,4 +1,4 @@
-# kontroapi
+# @kontroapis/cli
 
 Self-hostable WhatsApp Business API gateway — one command, full control.
 
@@ -6,7 +6,7 @@ Self-hostable WhatsApp Business API gateway — one command, full control.
 
 ```bash
 # Install
-npm install -g kontroapi
+npm install -g @kontroapis/cli
 
 # Initialize (requires Docker)
 kontroapi init

@@ -1,5 +1,5 @@
 {
-  "name": "kontroapi",
+  "name": "@kontroapis/cli",
   "version": "0.1.0",
   "description": "Self-hostable WhatsApp Business API gateway — one command, full control",
   "type": "module",
@@ -31,6 +31,7 @@
     "self-hosted",
     "open-source",
     "kontroapi",
+    "kontroapis",
     "whatsapp-api",
     "whatsapp-bot",
     "baileys-api"

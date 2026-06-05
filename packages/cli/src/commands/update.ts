@@ -10,14 +10,14 @@ const DOCKER_COMPOSE_FILE = join(CONFIG_DIR, 'docker-compose.yml');
 export async function updateCommand() {
   const spinner = ora('Checking for updates...').start();
   try {
-    const latest = execSync('npm view kontroapi version', { encoding: 'utf8' }).trim();
+    const latest = execSync('npm view @kontroapis/cli version', { encoding: 'utf8' }).trim();
     const currentPkg = require('../../package.json');
     const current = currentPkg.version;
     if (latest === current) {
       spinner.succeed(`Already on latest version (${current})`);
     } else {
       spinner.info(`Updating CLI ${current} → ${latest}`);
-      execSync('npm install -g kontroapi@latest', { stdio: 'inherit' });
+      execSync('npm install -g @kontroapis/cli@latest', { stdio: 'inherit' });
     }
 
     if (existsSync(DOCKER_COMPOSE_FILE)) {
