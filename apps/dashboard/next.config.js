@@ -4,7 +4,7 @@ const path = require('path');
 const nextConfig = {
   output: 'standalone',
   turbopack: {
-    root: path.join(__dirname),
+    root: path.resolve(__dirname, '..', '..'),
   },
 };
 
