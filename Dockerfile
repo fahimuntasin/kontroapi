@@ -42,17 +42,17 @@ RUN cd apps/dashboard && npx next build
 
 # ─── engine-deps (production) ──────────────────────────
 FROM base AS engine-prod-deps
+COPY package.json package-lock.json* ./
 COPY apps/wa-engine/package.json ./apps/wa-engine/
 COPY packages/shared/package.json ./packages/shared/
-WORKDIR /app/apps/wa-engine
-RUN npm install --omit=dev --ignore-scripts --no-audit --no-fund
+RUN npm install -w apps/wa-engine --omit=dev --ignore-scripts --no-audit --no-fund
 
 # ─── dashboard-deps (production) ───────────────────────
 FROM base AS dashboard-prod-deps
+COPY package.json package-lock.json* ./
 COPY apps/dashboard/package.json ./apps/dashboard/
 COPY packages/shared/package.json ./packages/shared/
-WORKDIR /app/apps/dashboard
-RUN npm install --omit=dev --ignore-scripts --no-audit --no-fund
+RUN npm install -w apps/dashboard --omit=dev --ignore-scripts --no-audit --no-fund
 
 # ─── engine:runtime ────────────────────────────────────
 FROM base AS engine
