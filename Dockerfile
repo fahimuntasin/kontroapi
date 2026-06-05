@@ -24,8 +24,12 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=shared-builder /app/packages/shared/dist ./packages/shared/dist
 COPY --from=shared-builder /app/packages/shared/package.json ./packages/shared/package.json
 COPY --from=shared-builder /app/packages/shared/tsconfig.json ./packages/shared/tsconfig.json
+COPY package.json package-lock.json* ./
+COPY apps/wa-engine/package.json ./apps/wa-engine/
+COPY packages/shared/package.json ./packages/shared/
+RUN npm install -w apps/wa-engine --include=dev --ignore-scripts --no-audit --no-fund
 COPY apps/wa-engine ./apps/wa-engine
-RUN cd apps/wa-engine && npm install --include=dev --ignore-scripts --no-audit --no-fund && npx tsc --build
+RUN cd apps/wa-engine && npx tsc --build
 
 # ─── dashboard-builder ─────────────────────────────────
 FROM base AS dashboard-builder
