@@ -1,0 +1,36 @@
+node_modules
+.next
+dist
+.env
+.env.local
+.env.*.local
+*.tsbuildinfo
+*.js
+*.js.map
+*.d.ts
+!packages/shared/src/**/*.ts
+.turbo
+coverage
+.vscode
+.idea
+.DS_Store
+*.log
+tmp
+temp
+.vercel
+apps/wa-engine/.baileys-sessions/
+
+# KontroAPI CLI runtime data
+.kontroapi/
+
+# Build outputs
+packages/cli/dist/
+apps/*/dist/
+
+# Test artifacts
+.nyc_output/
+playwright-report/
+test-results/
+
+# n8n nodes
+packages/n8n-nodes-kontroapi/.npmrc

@@ -1,0 +1,70 @@
+{
+  "name": "kontroapi",
+  "version": "0.1.0",
+  "description": "Self-hostable WhatsApp Business API gateway — one command, full control",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "kontroapi": "bin/kontroapi.js"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "templates",
+    "docker-compose.yml",
+    "README.md",
+    "LICENSE",
+    "SECURITY.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "prepublishOnly": "npm run build && tsc --noEmit",
+    "test": "echo \"no tests yet\""
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "keywords": [
+    "whatsapp",
+    "baileys",
+    "api",
+    "gateway",
+    "self-hosted",
+    "open-source",
+    "kontroapi",
+    "whatsapp-api",
+    "whatsapp-bot",
+    "baileys-api"
+  ],
+  "license": "AGPL-3.0",
+  "author": "KontroAPI <team@kontroapi.com>",
+  "homepage": "https://kontroapi.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fahimuntasin/kontroapi.git"
+  },
+  "bugs": {
+    "url": "https://github.com/fahimuntasin/kontroapi/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "inquirer": "^10.2.0",
+    "nanoid": "^5.0.9",
+    "ora": "^8.1.0",
+    "pg": "^8.13.1",
+    "redis": "^4.7.0"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^9.0.7",
+    "@types/node": "^20.14.0",
+    "@types/pg": "^8.11.10",
+    "tsx": "^4.19.0",
+    "typescript": "^5.4.5"
+  }
+}

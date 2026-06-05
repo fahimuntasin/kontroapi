@@ -1,0 +1,37 @@
+name: Bug Report
+about: Report a bug to help us improve
+title: "[Bug]: "
+labels: bug
+assignees: ''
+
+---
+
+**Describe the bug**
+A clear and concise description.
+
+**To reproduce**
+Steps to reproduce:
+1. `kontroapi init`
+2. ...
+3. See error
+
+**Expected behavior**
+What you expected to happen.
+
+**Actual behavior**
+What actually happened.
+
+**Environment**
+- KontroAPI version: `kontroapi --version`
+- OS: [e.g. Ubuntu 22.04, macOS 14, Windows 11]
+- Node version: `node --version`
+- Docker version: `docker --version`
+- Installation method: [npm, docker, source]
+
+**Logs**
+```
+paste from ~/.kontroapi/kontroapi.log
+```
+
+**Screenshots**
+If applicable, add screenshots.

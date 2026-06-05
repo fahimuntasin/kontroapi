@@ -1,0 +1,29 @@
+{
+  "name": "n8n-nodes-kontroapi",
+  "version": "0.5.0",
+  "description": "KontroAPI nodes for n8n - Send and receive WhatsApp messages",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist", "index.js", "README.md"],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": ["dist/credentials/KontroAPIApi.credentials.js"],
+    "nodes": ["dist/nodes/KontroAPI/KontroAPI.node.js", "dist/nodes/KontroAPI/KontroAPITrigger.node.js"]
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "n8n-community-node-package",
+    "n8n",
+    "n8n-nodes",
+    "whatsapp",
+    "kontroapi"
+  ],
+  "author": "KontroAPI",
+  "license": "MIT",
+  "dependencies": {
+    "n8n-workflow": "^2.15.0"
+  }
+}

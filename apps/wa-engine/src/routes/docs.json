@@ -1,0 +1,629 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "KontroAPI WhatsApp API",
+    "description": "Production-grade WhatsApp Business API with multi-session management, webhooks, and billing.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "KontroAPI Support",
+      "email": "support@kontroapi.com"
+    },
+    "license": {
+      "name": "Proprietary"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://wa.kontroapi.com",
+      "description": "Production server"
+    },
+    {
+      "url": "http://localhost:3000",
+      "description": "Development server"
+    }
+  ],
+  "tags": [
+    { "name": "Health", "description": "Server health and status" },
+    { "name": "Sessions", "description": "WhatsApp session management" },
+    { "name": "Messages", "description": "Send and manage messages" },
+    { "name": "Contacts", "description": "Contact operations" },
+    { "name": "Groups", "description": "Group operations" },
+    { "name": "Billing", "description": "Plans and subscriptions" },
+    { "name": "Tokens", "description": "Personal Access Tokens" }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Health Check",
+        "description": "Check if the API is running and healthy",
+        "responses": {
+          "200": {
+            "description": "API is healthy",
+            "content": {
+              "application/json": {
+                "example": { "status": "ok", "uptime": 123.45 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/billing/plans": {
+      "get": {
+        "tags": ["Billing"],
+        "summary": "List Available Plans",
+        "description": "Get all available subscription plans with pricing",
+        "responses": {
+          "200": {
+            "description": "List of plans",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": [
+                    { "id": "trial", "name": "Trial", "price": 0, "session_limit": 1, "features": ["1 session", "50 messages/day"] },
+                    { "id": "basic", "name": "Basic", "price": 699, "session_limit": 1 },
+                    { "id": "pro", "name": "Pro", "price": 1499, "session_limit": 3 },
+                    { "id": "plus", "name": "Plus", "price": 2999, "session_limit": 6 },
+                    { "id": "business", "name": "Business", "price": 4499, "session_limit": 10 }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/billing/subscription": {
+      "get": {
+        "tags": ["Billing"],
+        "summary": "Get Current Subscription",
+        "description": "Get the current user's subscription details",
+        "security": [{ "InternalAuth": [] }],
+        "responses": {
+          "200": { "description": "Subscription details" }
+        }
+      }
+    },
+    "/api/v1/billing/usage": {
+      "get": {
+        "tags": ["Billing"],
+        "summary": "Get Usage Statistics",
+        "description": "Get current session and message usage",
+        "security": [{ "InternalAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Usage data",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": {
+                    "sessions": { "current": 1, "limit": 3 },
+                    "messages_today": { "current": 45, "limit": null }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/whatsapp-sessions": {
+      "get": {
+        "tags": ["Sessions"],
+        "summary": "List Sessions",
+        "description": "Get all WhatsApp sessions for the authenticated user",
+        "security": [{ "ApiKeyAuth": [] }, { "PATAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "List of sessions",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": [
+                    { "id": "uuid-123", "name": "My Business", "status": "connected", "phone": "8801XXXXXXXXX", "created_at": "2024-01-01T00:00:00Z" }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "description": "Invalid or missing API key" }
+        }
+      },
+      "post": {
+        "tags": ["Sessions"],
+        "summary": "Create Session",
+        "description": "Create a new WhatsApp session",
+        "security": [{ "PATAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": { "type": "string", "maxLength": 100 },
+                  "webhook_url": { "type": "string", "format": "uri" },
+                  "webhook_secret": { "type": "string", "minLength": 16 },
+                  "proxy_url": { "type": "string" }
+                }
+              },
+              "example": { "name": "My Business", "webhook_url": "https://example.com/webhook" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Session created",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": { "id": "uuid", "name": "My Business" },
+                  "api_key_raw": "sk_xxxxxxxxxxxxxxxxxxxx"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/whatsapp-sessions/{id}": {
+      "get": {
+        "tags": ["Sessions"],
+        "summary": "Get Session",
+        "description": "Get a specific session by ID",
+        "security": [{ "ApiKeyAuth": [] }, { "PATAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Session details" },
+          "404": { "description": "Session not found" }
+        }
+      },
+      "put": {
+        "tags": ["Sessions"],
+        "summary": "Update Session",
+        "description": "Update session settings",
+        "security": [{ "PATAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "webhook_url": { "type": "string" },
+                  "webhook_events": { "type": "array", "items": { "type": "string" } },
+                  "account_protection": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Session updated" }
+        }
+      },
+      "delete": {
+        "tags": ["Sessions"],
+        "summary": "Delete Session",
+        "description": "Delete a session and all associated data",
+        "security": [{ "PATAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Session deleted" }
+        }
+      }
+    },
+    "/api/v1/whatsapp-sessions/{id}/connect": {
+      "post": {
+        "tags": ["Sessions"],
+        "summary": "Connect Session",
+        "description": "Start connection process (generates QR code)",
+        "security": [{ "PATAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Connection started" }
+        }
+      }
+    },
+    "/api/v1/whatsapp-sessions/{id}/disconnect": {
+      "post": {
+        "tags": ["Sessions"],
+        "summary": "Disconnect Session",
+        "description": "Disconnect from WhatsApp",
+        "security": [{ "PATAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Disconnected" }
+        }
+      }
+    },
+    "/api/v1/whatsapp-sessions/{id}/qrcode": {
+      "get": {
+        "tags": ["Sessions"],
+        "summary": "Get QR Code",
+        "description": "Get QR code for session connection (Base64 PNG)",
+        "security": [{ "ApiKeyAuth": [] }, { "PATAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "QR code image",
+            "content": { "image/png": {} }
+          }
+        }
+      }
+    },
+    "/api/v1/send-message": {
+      "post": {
+        "tags": ["Messages"],
+        "summary": "Send Message",
+        "description": "Send a WhatsApp message. Supports text, image, video, audio, document, sticker, location, contact, poll, and reaction types.",
+        "security": [{ "ApiKeyAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["to", "type"],
+                "properties": {
+                  "to": { "type": "string", "description": "Recipient phone or group JID" },
+                  "type": { "type": "string", "enum": ["text", "image", "video", "audio", "document", "sticker", "location", "contact", "poll", "reaction"] },
+                  "text": { "type": "string" },
+                  "url": { "type": "string", "format": "uri" },
+                  "base64": { "type": "string" },
+                  "caption": { "type": "string" },
+                  "filename": { "type": "string" },
+                  "mimetype": { "type": "string" },
+                  "quoted_message_id": { "type": "string" },
+                  "view_once": { "type": "boolean" },
+                  "latitude": { "type": "number" },
+                  "longitude": { "type": "number" },
+                  "contact_name": { "type": "string" },
+                  "contact_phone": { "type": "string" },
+                  "question": { "type": "string" },
+                  "options": { "type": "array", "items": { "type": "string" } },
+                  "emoji": { "type": "string" },
+                  "message_id": { "type": "string" },
+                  "preview_url": { "type": "boolean" },
+                  "gif_playback": { "type": "boolean" },
+                  "ptt": { "type": "boolean" }
+                }
+              },
+              "examples": {
+                "text": { "to": "8801XXXXXXXXX", "type": "text", "text": "Hello World!" },
+                "image": { "to": "8801XXXXXXXXX", "type": "image", "url": "https://example.com/img.jpg", "caption": "Photo" },
+                "video": { "to": "8801XXXXXXXXX", "type": "video", "url": "https://example.com/video.mp4" }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Message queued",
+            "content": {
+              "application/json": {
+                "example": { "success": true, "message_id": "xxx" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/messages/{message_id}": {
+      "put": {
+        "tags": ["Messages"],
+        "summary": "Edit Message",
+        "description": "Edit a sent message",
+        "security": [{ "ApiKeyAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "message_id", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "text": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Message edited" }
+        }
+      },
+      "delete": {
+        "tags": ["Messages"],
+        "summary": "Delete Message",
+        "description": "Delete a message for everyone",
+        "security": [{ "ApiKeyAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "message_id", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "for_everyone": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Message deleted" }
+        }
+      }
+    },
+    "/api/v1/contacts": {
+      "get": {
+        "tags": ["Contacts"],
+        "summary": "List Contacts",
+        "description": "Get all contacts",
+        "security": [{ "ApiKeyAuth": [] }],
+        "responses": {
+          "200": { "description": "Contact list" }
+        }
+      }
+    },
+    "/api/v1/contacts/{phone}": {
+      "get": {
+        "tags": ["Contacts"],
+        "summary": "Get Contact",
+        "description": "Get contact by phone number",
+        "security": [{ "ApiKeyAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "phone", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Contact info" }
+        }
+      }
+    },
+    "/api/v1/on-whatsapp/{phone}": {
+      "get": {
+        "tags": ["Contacts"],
+        "summary": "Check if on WhatsApp",
+        "description": "Check if a phone number is on WhatsApp",
+        "security": [{ "ApiKeyAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "phone", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Check result",
+            "content": {
+              "application/json": {
+                "example": { "success": true, "exists": true, "jid": "8801XXXXXXXXX@c.us" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/groups": {
+      "get": {
+        "tags": ["Groups"],
+        "summary": "List Groups",
+        "description": "Get all groups the session is part of",
+        "security": [{ "ApiKeyAuth": [] }],
+        "responses": {
+          "200": { "description": "Group list" }
+        }
+      },
+      "post": {
+        "tags": ["Groups"],
+        "summary": "Create Group",
+        "description": "Create a new group",
+        "security": [{ "ApiKeyAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "participants"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "participants": { "type": "array", "items": { "type": "string" } }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Group created" }
+        }
+      }
+    },
+    "/api/v1/groups/{jid}": {
+      "get": {
+        "tags": ["Groups"],
+        "summary": "Get Group Metadata",
+        "security": [{ "ApiKeyAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "jid", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Group metadata" }
+        }
+      }
+    },
+    "/api/v1/groups/{jid}/leave": {
+      "post": {
+        "tags": ["Groups"],
+        "summary": "Leave Group",
+        "security": [{ "ApiKeyAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "jid", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Left group" }
+        }
+      }
+    },
+    "/api/v1/status": {
+      "get": {
+        "tags": ["Sessions"],
+        "summary": "Get Connection Status",
+        "description": "Get current WhatsApp connection status",
+        "security": [{ "ApiKeyAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Status info",
+            "content": {
+              "application/json": {
+                "example": { "success": true, "status": "connected", "phone": "8801XXXXXXXXX" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/user": {
+      "get": {
+        "tags": ["Sessions"],
+        "summary": "Get WhatsApp User Info",
+        "description": "Get the connected WhatsApp account info",
+        "security": [{ "ApiKeyAuth": [] }],
+        "responses": {
+          "200": { "description": "User info" }
+        }
+      }
+    },
+    "/api/v1/tokens": {
+      "get": {
+        "tags": ["Tokens"],
+        "summary": "List API Tokens",
+        "description": "Get all Personal Access Tokens for the user",
+        "security": [{ "InternalAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Token list",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": [
+                    { "id": "uuid", "name": "Production", "last_used": "2024-01-01T00:00:00Z", "created_at": "2024-01-01T00:00:00Z" }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Tokens"],
+        "summary": "Create API Token",
+        "description": "Create a new Personal Access Token",
+        "security": [{ "InternalAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": { "type": "string", "maxLength": 50 },
+                  "expires_at": { "type": "string", "format": "date-time" }
+                }
+              },
+              "example": { "name": "Production API" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Token created",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": { "id": "uuid", "name": "Production API", "token": "pat_xxxxxxxx", "created_at": "2024-01-01T00:00:00Z" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tokens/{id}": {
+      "get": {
+        "tags": ["Tokens"],
+        "summary": "Get Token",
+        "description": "Get a specific token (token value only shown at creation)",
+        "security": [{ "InternalAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Token details" }
+        }
+      },
+      "delete": {
+        "tags": ["Tokens"],
+        "summary": "Revoke Token",
+        "description": "Revoke a Personal Access Token",
+        "security": [{ "InternalAuth": [] }],
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Token revoked",
+            "content": {
+              "application/json": {
+                "example": { "success": true, "message": "Token revoked" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "Session API key (starts with sk_)"
+      },
+      "PATAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Api-Key",
+        "description": "Personal Access Token (starts with pat_)"
+      },
+      "InternalAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-User-ID",
+        "description": "Internal authenticated request from dashboard"
+      }
+    }
+  }
+}

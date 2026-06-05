@@ -1,0 +1,1 @@
+{"version":3,"file":"SendMessage.d.ts","sourceRoot":"","sources":["../src/SendMessage.ts"],"names":[],"mappings":"AAAA,OAAO,EACL,iBAAiB,EACjB,SAAS,EACT,oBAAoB,EACrB,MAAM,cAAc,CAAC;AAEtB,qBAAa,WAAY,YAAW,SAAS;IAC3C,WAAW,EAAE,oBAAoB,CAwI/B;IAEI,OAAO,CAAC,IAAI,EAAE,iBAAiB;CAoEtC"}

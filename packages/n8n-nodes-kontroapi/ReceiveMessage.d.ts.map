@@ -1,0 +1,1 @@
+{"version":3,"file":"ReceiveMessage.d.ts","sourceRoot":"","sources":["../src/ReceiveMessage.ts"],"names":[],"mappings":"AAAA,OAAO,EACL,iBAAiB,EACjB,SAAS,EACT,oBAAoB,EACrB,MAAM,cAAc,CAAC;AAEtB,qBAAa,cAAe,YAAW,SAAS;IAC9C,WAAW,EAAE,oBAAoB,CAsC/B;IAEI,OAAO,CAAC,IAAI,EAAE,iBAAiB;;;;;;;CAStC"}
