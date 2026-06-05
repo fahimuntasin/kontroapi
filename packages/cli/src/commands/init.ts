@@ -29,6 +29,7 @@ interface KontroConfig {
     jwtSecret: string;
     internalSecret: string;
     encryptionKey: string;
+    otpSecret: string;
   };
   admin: { email: string; passwordHash: string; createdAt: string };
   branding: { name: string; supportEmail: string };
@@ -84,6 +85,7 @@ export async function initCommand(opts: any) {
       jwtSecret: randomBytes(48).toString('hex'),
       internalSecret: randomBytes(32).toString('hex'),
       encryptionKey: randomBytes(32).toString('hex'),
+      otpSecret: randomBytes(48).toString('hex'),
     },
   };
 
@@ -304,6 +306,7 @@ ${hasBundledDb ? '      postgres:\n        condition: service_healthy\n' : ''}${
       REDIS_PASSWORD: ${new URL(config.redis.url).password || ''}
       JWT_SECRET: \${JWT_SECRET}
       INTERNAL_SECRET: \${INTERNAL_SECRET}
+      INTERNAL_OTP_SECRET: \${INTERNAL_OTP_SECRET}
       SESSION_ENCRYPTION_KEY: \${SESSION_ENCRYPTION_KEY}
       WEBHOOK_SECRET_ENCRYPTION_KEY: \${WEBHOOK_SECRET_ENCRYPTION_KEY}
       PORT: 3000
@@ -381,6 +384,7 @@ KONTROAPI_DASHBOARD_IMAGE=${config.images.dashboard}
 # Secrets (used by docker-compose.yml)
 JWT_SECRET=${config.secrets.jwtSecret}
 INTERNAL_SECRET=${config.secrets.internalSecret}
+INTERNAL_OTP_SECRET=${config.secrets.otpSecret}
 SESSION_ENCRYPTION_KEY=${config.secrets.encryptionKey}
 WEBHOOK_SECRET_ENCRYPTION_KEY=${config.secrets.encryptionKey}
 

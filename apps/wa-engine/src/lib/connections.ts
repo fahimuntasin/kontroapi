@@ -21,7 +21,7 @@ import { webhookQueue } from './queue';
 import { config } from '../config';
 import type { SessionRecord, WebhookEvent } from '../types';
 
-const SESSIONS_DIR = join(process.cwd(), '.baileys-sessions');
+const SESSIONS_DIR = process.env.BAILEYS_SESSIONS_DIR || join(process.cwd(), '.baileys-sessions');
 if (!existsSync(SESSIONS_DIR)) mkdirSync(SESSIONS_DIR, { recursive: true });
 
 // ============================================================
