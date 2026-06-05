@@ -22,6 +22,8 @@ RUN cd packages/shared && npx tsc
 FROM base AS engine-builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=shared-builder /app/packages/shared/dist ./packages/shared/dist
+COPY --from=shared-builder /app/packages/shared/package.json ./packages/shared/package.json
+COPY --from=shared-builder /app/packages/shared/tsconfig.json ./packages/shared/tsconfig.json
 COPY packages/shared/package.json ./packages/shared/
 COPY apps/wa-engine ./apps/wa-engine
 RUN cd apps/wa-engine && npx tsc --build
