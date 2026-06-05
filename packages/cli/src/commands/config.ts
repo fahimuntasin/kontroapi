@@ -7,7 +7,7 @@ const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
 
 export async function configCommand(key?: string, value?: string) {
   if (!existsSync(CONFIG_FILE)) {
-    console.log(chalk.yellow('  Not initialized.'));
+    console.log(chalk.yellow('  Not initialized. Run: kontroapi init'));
     return;
   }
 
@@ -15,7 +15,11 @@ export async function configCommand(key?: string, value?: string) {
 
   if (!key) {
     console.log(chalk.bold('\n  Configuration:\n'));
-    console.log(JSON.stringify(config, null, 2));
+    const safe = { ...config };
+    if (safe.secrets) safe.secrets = '***hidden***';
+    if (safe.billing?.apiKey) safe.billing.apiKey = '***hidden***';
+    if (safe.billing?.webhookSecret) safe.billing.webhookSecret = '***hidden***';
+    console.log(JSON.stringify(safe, null, 2));
     console.log(chalk.gray('\n  Use: kontroapi config <key> <value>'));
     console.log(chalk.gray('  e.g. kontroapi config ports.dashboard 3001'));
     return;
@@ -27,7 +31,6 @@ export async function configCommand(key?: string, value?: string) {
     return;
   }
 
-  // Set nested key
   const keys = key.split('.');
   let target: any = config;
   for (let i = 0; i < keys.length - 1; i++) {
@@ -42,4 +45,5 @@ export async function configCommand(key?: string, value?: string) {
 
   writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
   console.log(chalk.green(`  ✓ Set ${key} = ${parsed}`));
+  console.log(chalk.yellow('  Run `kontroapi start` to apply changes.'));
 }

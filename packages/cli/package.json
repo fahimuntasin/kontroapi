@@ -10,8 +10,6 @@
   "files": [
     "bin",
     "dist",
-    "templates",
-    "docker-compose.yml",
     "README.md",
     "LICENSE",
     "SECURITY.md"

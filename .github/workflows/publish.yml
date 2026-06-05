@@ -1,12 +1,17 @@
-name: Publish to npm
+name: Publish to npm + GHCR
 
 on:
   push:
     tags:
       - 'v*.*.*'
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
-  publish:
+  # 1. Publish the `kontroapi` CLI to npmjs.org
+  publish-npm:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,7 +23,10 @@ jobs:
           cache: npm
 
       - name: Install root deps
-        run: npm ci
+        run: npm ci --ignore-scripts
+
+      - name: Build shared package
+        run: npm run build -w packages/shared
 
       - name: Build CLI
         run: npm run build -w packages/cli
@@ -31,26 +39,84 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-  docker:
+  # 2. Build & push `kontroapi/engine` Docker image to GHCR
+  publish-engine:
     runs-on: ubuntu-latest
-    needs: publish
-    if: startsWith(github.ref, 'refs/tags/v')
     steps:
       - uses: actions/checkout@v4
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@v3
 
-      - name: Build and push
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Build and push engine image
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: Dockerfile
+          target: engine
           push: true
           tags: |
-            kontroapi/kontroapi:latest
-            kontroapi/kontroapi:${{ github.ref_name }}
+            ghcr.io/fahimuntasin/kontroapi/engine:latest
+            ghcr.io/fahimuntasin/kontroapi/engine:${{ steps.version.outputs.VERSION }}
           build-args: |
-            VERSION=${{ github.ref_name }}
+            VERSION=${{ steps.version.outputs.VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # 3. Build & push `kontroapi/dashboard` Docker image to GHCR
+  publish-dashboard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Build and push dashboard image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          target: dashboard
+          push: true
+          tags: |
+            ghcr.io/fahimuntasin/kontroapi/dashboard:latest
+            ghcr.io/fahimuntasin/kontroapi/dashboard:${{ steps.version.outputs.VERSION }}
+          build-args: |
+            VERSION=${{ steps.version.outputs.VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # 4. Create GitHub Release with notes
+  release:
+    runs-on: ubuntu-latest
+    needs: [publish-npm, publish-engine, publish-dashboard]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          draft: false
+          fail_on_unmatched_files: true

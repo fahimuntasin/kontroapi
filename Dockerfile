@@ -1,70 +1,96 @@
+syntax = "docker/dockerfile:1.7"
+
+# ─── base ──────────────────────────────────────────────
 FROM node:22-alpine AS base
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1
 
-# ─── Stage 1: dependencies ─────────────────────────────────
+# ─── deps ──────────────────────────────────────────────
 FROM base AS deps
 COPY package.json package-lock.json* ./
 COPY apps/wa-engine/package.json ./apps/wa-engine/
 COPY apps/dashboard/package.json ./apps/dashboard/
 COPY packages/shared/package.json ./packages/shared/
-COPY packages/cli/package.json ./packages/cli/
-COPY packages/n8n-nodes-kontroapi/package.json ./packages/n8n-nodes-kontroapi/
-RUN npm ci
+RUN npm ci --ignore-scripts
 
-# ─── Stage 2: build ───────────────────────────────────────
-FROM base AS builder
+# ─── shared-builder (shared package needed by all apps) ──
+FROM base AS shared-builder
 COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm run build
+COPY packages/shared ./packages/shared
+RUN cd packages/shared && npx tsc
 
-# ─── Stage 3: production deps ─────────────────────────────
-FROM base AS prod-deps
-COPY package.json package-lock.json* ./
+# ─── engine-builder ────────────────────────────────────
+FROM base AS engine-builder
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=shared-builder /app/packages/shared/dist ./packages/shared/dist
+COPY packages/shared/package.json ./packages/shared/
+COPY apps/wa-engine ./apps/wa-engine
+RUN cd apps/wa-engine && npx tsc --build
+
+# ─── dashboard-builder ─────────────────────────────────
+FROM base AS dashboard-builder
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=shared-builder /app/packages/shared/dist ./packages/shared/dist
+COPY packages/shared/package.json ./packages/shared/
+COPY apps/dashboard ./apps/dashboard
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN cd apps/dashboard && npx next build
+
+# ─── engine-deps (production) ──────────────────────────
+FROM base AS engine-prod-deps
 COPY apps/wa-engine/package.json ./apps/wa-engine/
+COPY packages/shared/package.json ./packages/shared/
+RUN cd apps/wa-engine && npm ci --omit=dev --ignore-scripts
+
+# ─── dashboard-deps (production) ───────────────────────
+FROM base AS dashboard-prod-deps
 COPY apps/dashboard/package.json ./apps/dashboard/
 COPY packages/shared/package.json ./packages/shared/
-COPY packages/cli/package.json ./packages/cli/
-RUN npm ci --omit=dev --ignore-scripts
+RUN cd apps/dashboard && npm ci --omit=dev --ignore-scripts
 
-# ─── Stage 4: runner ──────────────────────────────────────
-FROM base AS runner
+# ─── engine:runtime ────────────────────────────────────
+FROM base AS engine
 WORKDIR /app
+RUN addgroup -g 1001 -S nodejs && adduser -S -u 1001 -G nodejs kontroapi
 
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV KONTROAPI_HOME=/data
+COPY --from=engine-prod-deps /app/node_modules ./node_modules
+COPY --from=shared-builder /app/packages/shared ./packages/shared
+COPY --from=engine-builder /app/apps/wa-engine/dist ./apps/wa-engine/dist
+COPY --from=engine-builder /app/apps/wa-engine/schema.sql ./apps/wa-engine/
+COPY --from=engine-builder /app/apps/wa-engine/package.json ./apps/wa-engine/
+COPY docker-entrypoint-engine.sh /usr/local/bin/docker-entrypoint-engine.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint-engine.sh
 
-# System user
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 kontroapi
-
-# Copy built artifacts
-COPY --from=prod-deps /app/node_modules ./node_modules
-COPY --from=builder /app/apps/wa-engine/dist ./apps/wa-engine/dist
-COPY --from=builder /app/apps/wa-engine/package.json ./apps/wa-engine/
-COPY --from=builder /app/apps/wa-engine/schema.sql ./apps/wa-engine/
-COPY --from=builder /app/apps/dashboard/.next ./apps/dashboard/.next
-COPY --from=builder /app/apps/dashboard/public ./apps/dashboard/public
-COPY --from=builder /app/apps/dashboard/package.json ./apps/dashboard/
-COPY --from=builder /app/apps/dashboard/next.config.js ./apps/dashboard/
-COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
-COPY --from=builder /app/packages/shared/package.json ./packages/shared/
-COPY --from=builder /app/packages/cli/bin ./packages/cli/bin
-COPY --from=builder /app/packages/cli/dist ./packages/cli/dist
-COPY --from=builder /app/packages/cli/package.json ./packages/cli/
-COPY package.json ./
-COPY docker-compose.yml /docker-compose.yml
-
-# Data directory for sessions, logs, config
-RUN mkdir -p /data && chown -R kontroapi:nodejs /data /app
 USER kontroapi
-
-EXPOSE 3000 3001
-
+ENV NODE_ENV=production
+ENV KONTROAPI_MODE=self-hosted
+EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/health',r=>process.exit(r.statusCode===200?0:1))"
+  CMD node -e "require('http').get('http://localhost:3000/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
+ENTRYPOINT ["docker-entrypoint-engine.sh"]
+CMD ["node", "apps/wa-engine/dist/index.js"]
 
-ENTRYPOINT ["node", "packages/cli/dist/index.js"]
-CMD ["start"]
+# ─── dashboard:runtime ─────────────────────────────────
+FROM base AS dashboard
+WORKDIR /app
+RUN addgroup -g 1001 -S nodejs && adduser -S -u 1001 -G nodejs kontroapi
+
+COPY --from=dashboard-prod-deps /app/node_modules ./node_modules
+COPY --from=shared-builder /app/packages/shared ./packages/shared
+COPY --from=dashboard-builder /app/apps/dashboard/.next/standalone ./
+COPY --from=dashboard-builder /app/apps/dashboard/.next/static ./apps/dashboard/.next/static
+COPY --from=dashboard-builder /app/apps/dashboard/public ./apps/dashboard/public
+COPY --from=engine-builder /app/apps/wa-engine/schema.sql ./apps/wa-engine/schema.sql
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+USER kontroapi
+ENV NODE_ENV=production
+ENV PORT=3001
+ENV HOSTNAME=0.0.0.0
+EXPOSE 3001
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3001/api/auth/me',r=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))"
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["node", "server.js"]

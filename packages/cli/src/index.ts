@@ -16,21 +16,18 @@ program
 
 program
   .command('init')
-  .description('Initialize a new KontroAPI instance (Postgres + Redis + DB schema + admin user)')
+  .description('Initialize a new KontroAPI instance (generates docker-compose.yml + .env + admin user)')
   .option('-y, --yes', 'use defaults without asking')
   .option('--port <port>', 'dashboard port', '3001')
   .option('--engine-port <port>', 'WA engine port', '3000')
   .option('--db-url <url>', 'Postgres connection string')
   .option('--redis-url <url>', 'Redis connection string')
-  .option('--no-docker', 'do not auto-start docker-compose services')
   .action(initCommand);
 
 program
   .command('start')
-  .description('Start the WA engine + dashboard')
+  .description('Start the WA engine + dashboard via docker compose')
   .option('-d, --detach', 'run in background')
-  .option('--engine-only', 'start only WA engine')
-  .option('--dashboard-only', 'start only dashboard')
   .action(startCommand);
 
 program
