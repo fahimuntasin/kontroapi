@@ -16,6 +16,7 @@ const API_ROUTES_NO_AUTH = [
   '/api/setup/domain',
   '/api/setup/activate',
   '/api/setup/finish',
+  '/api/setup/cloudflare-auth',
 ];
 
 const JWT_SECRET = new TextEncoder().encode(
