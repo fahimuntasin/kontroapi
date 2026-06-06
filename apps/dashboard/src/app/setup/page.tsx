@@ -213,6 +213,7 @@ export default function SetupPage() {
   const [activating, setActivating] = useState(false);
   const [requesting, setRequesting] = useState(false);
   const [initChecked, setInitChecked] = useState(false);
+  const [cfLoggingIn, setCfLoggingIn] = useState(false);
 
   useEffect(() => {
     fetch('/api/setup/check', { method: 'POST' })
@@ -225,6 +226,20 @@ export default function SetupPage() {
       .catch(() => {})
       .finally(() => setInitChecked(true));
   }, [router]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('cloudflare');
+    if (status === 'connected') {
+      const token = params.get('tunnelToken');
+      const domain = params.get('domain');
+      if (token && domain) {
+        setData((p) => ({ ...p, domain, cloudflareToken: token }));
+        setTunnelResult({ success: true, message: `Tunnel created! ${domain} is now connected.` });
+        window.history.replaceState({}, '', '/setup');
+      }
+    }
+  }, []);
 
   const navigate = useCallback(
     (next: SetupStep) => {
@@ -323,6 +338,26 @@ export default function SetupPage() {
       toast.error(msg);
     } finally {
       setTunnelCreating(false);
+    }
+  };
+
+  const handleCloudflareLogin = async () => {
+    setCfLoggingIn(true);
+    try {
+      const res = await fetch('/api/setup/cloudflare-auth');
+      const result = await res.json();
+      if (result.url) {
+        if (data.domain) sessionStorage.setItem('cfDomain', data.domain);
+        window.location.href = result.url;
+      } else if (result.setup) {
+        toast.info('Cloudflare OAuth not configured. Use API token instead.');
+      } else {
+        toast.error(result.error || 'Failed to connect');
+      }
+    } catch {
+      toast.error('Failed to connect to Cloudflare');
+    } finally {
+      setCfLoggingIn(false);
     }
   };
 
@@ -668,18 +703,26 @@ Star us on GitHub: github.com/fahimuntasin/kontroapi`}
                         Automatically create a Cloudflare Tunnel and configure DNS — no manual config needed.
                       </p>
 
-                      <a
-                        href="https://dash.cloudflare.com/profile/api-tokens"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex w-full items-center justify-center gap-2 rounded-lg border border-orange-500/40 bg-orange-500/10 px-4 py-3 text-sm font-medium text-orange-400 transition-all hover:bg-orange-500/20"
-                      >
-                        <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current"><path d="M16.5 7.5l-4.5-4.5L16.5 3l5.25 4.5L16.5 7.5zm-9 0l-4.5-4.5L7.5 3l5.25 4.5L7.5 7.5zm4.5 9l-4.5-4.5L12 16.5l5.25-4.5L12 16.5z"/></svg>
-                        Get Cloudflare API Token
-                      </a>
-                      <p className="text-[11px] text-muted-foreground text-center">
-                        Click above → Create Token → Use template "Create Additional Tokens" → Permissions: Zone:DNS:Edit, Account:Cloudflare Tunnel:Edit
-                      </p>
+                      <div className="flex flex-col gap-3">
+                        <button
+                          type="button"
+                          onClick={handleCloudflareLogin}
+                          disabled={cfLoggingIn}
+                          className="flex items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-orange-600 disabled:pointer-events-none disabled:opacity-50"
+                        >
+                          {cfLoggingIn ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current"><path d="M16.5 7.5l-4.5-4.5L16.5 3l5.25 4.5L16.5 7.5zm-9 0l-4.5-4.5L7.5 3l5.25 4.5L7.5 7.5zm4.5 9l-4.5-4.5L12 16.5l5.25-4.5L12 16.5z"/></svg>
+                          )}
+                          {cfLoggingIn ? 'Connecting...' : 'Login with Cloudflare'}
+                        </button>
+                        <div className="flex items-center gap-2">
+                          <div className="h-px flex-1 bg-border" />
+                          <span className="text-[11px] text-muted-foreground">or use API token</span>
+                          <div className="h-px flex-1 bg-border" />
+                        </div>
+                      </div>
 
                       <div>
                         <label className="block text-sm font-medium text-foreground mb-1.5">API Token</label>
