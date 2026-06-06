@@ -37,6 +37,7 @@ interface WizardData {
   domain: string;
   nginxConfig: string | null;
   nginxCertbotCmd: string | null;
+  nginxInstructions: string[];
   licenseKey: string;
   requestEmail: string;
   activated: boolean;
@@ -53,6 +54,7 @@ const DEFAULT_DATA: WizardData = {
   domain: '',
   nginxConfig: null,
   nginxCertbotCmd: null,
+  nginxInstructions: [],
   licenseKey: '',
   requestEmail: '',
   activated: false,
@@ -337,10 +339,12 @@ export default function SetupPage() {
         domain: data.domain,
         action: 'generate-config',
       });
-      setData((prev) => ({
-        ...prev,
-        nginxConfig: result.config || null,
-        nginxCertbotCmd: result.certbotCmd || null,
+      const instructions = result.data?.instructions || [];
+      setData((p) => ({
+        ...p,
+        nginxConfig: result.data.config,
+        nginxCertbotCmd: result.data.certbotCommand,
+        nginxInstructions: instructions,
       }));
       toast.success('Nginx configuration generated.');
     } catch (err: unknown) {
@@ -659,62 +663,53 @@ Star us on GitHub: github.com/fahimuntasin/kontroapi`}
                   </div>
 
                   {data.domainType === 'cloudflare' && (
-                    <div className="space-y-3 rounded-lg border border-border bg-muted/20 p-4">
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-1.5">
-                          Cloudflare API Token
-                        </label>
-                        <input
-                          type="password"
-                          value={data.cloudflareToken}
-                          onChange={(e) => setData((p) => ({ ...p, cloudflareToken: e.target.value }))}
-                          placeholder="cf_..."
-                          className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
-                        />
-                        <p className="mt-1 text-[11px] text-muted-foreground">
-                          Needs DNS:Edit and Tunnel:Write permissions.
-                        </p>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-1.5">
-                          Domain
-                        </label>
-                        <input
-                          type="text"
-                          value={data.domain}
-                          onChange={(e) => setData((p) => ({ ...p, domain: e.target.value }))}
-                          placeholder="wa.yourdomain.com"
-                          className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        disabled={tunnelCreating}
-                        onClick={handleCreateTunnel}
-                        className="flex w-full items-center justify-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-all hover:bg-primary/20 disabled:pointer-events-none disabled:opacity-50"
+                    <div className="space-y-4 rounded-lg border border-border bg-muted/20 p-4">
+                      <p className="text-sm text-muted-foreground">
+                        Automatically create a Cloudflare Tunnel and configure DNS — no manual config needed.
+                      </p>
+
+                      <a
+                        href="https://dash.cloudflare.com/profile/api-tokens"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex w-full items-center justify-center gap-2 rounded-lg border border-orange-500/40 bg-orange-500/10 px-4 py-3 text-sm font-medium text-orange-400 transition-all hover:bg-orange-500/20"
                       >
-                        {tunnelCreating ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Sparkles className="h-4 w-4" />
-                        )}
+                        <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current"><path d="M16.5 7.5l-4.5-4.5L16.5 3l5.25 4.5L16.5 7.5zm-9 0l-4.5-4.5L7.5 3l5.25 4.5L7.5 7.5zm4.5 9l-4.5-4.5L12 16.5l5.25-4.5L12 16.5z"/></svg>
+                        Get Cloudflare API Token
+                      </a>
+                      <p className="text-[11px] text-muted-foreground text-center">
+                        Click above → Create Token → Use template "Create Additional Tokens" → Permissions: Zone:DNS:Edit, Account:Cloudflare Tunnel:Edit
+                      </p>
+
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-1.5">API Token</label>
+                        <input type="password" value={data.cloudflareToken} onChange={(e) => setData((p) => ({ ...p, cloudflareToken: e.target.value }))} placeholder="Paste your token here..." className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30" />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-1.5">Domain</label>
+                        <input type="text" value={data.domain} onChange={(e) => setData((p) => ({ ...p, domain: e.target.value }))} placeholder="wa.yourdomain.com" className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30" />
+                      </div>
+
+                      <button type="button" disabled={tunnelCreating} onClick={handleCreateTunnel}
+                        className="flex w-full items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-orange-600 disabled:pointer-events-none disabled:opacity-50">
+                        {tunnelCreating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                         Create Tunnel
                       </button>
+
                       {tunnelResult && (
-                        <div
-                          className={cn(
-                            'flex items-center gap-2 rounded-lg px-3 py-2 text-sm',
-                            tunnelResult.success
-                              ? 'bg-signal-green/10 text-signal-green'
-                              : 'bg-destructive/10 text-destructive',
-                          )}
-                        >
-                          {tunnelResult.success ? (
-                            <CheckCircle className="h-4 w-4 shrink-0" />
-                          ) : (
-                            <XCircle className="h-4 w-4 shrink-0" />
-                          )}
-                          {tunnelResult.message}
+                        <div className={cn('flex items-start gap-2 rounded-lg px-3 py-2 text-sm', tunnelResult.success ? 'bg-signal-green/10 text-signal-green' : 'bg-destructive/10 text-destructive')}>
+                          {tunnelResult.success ? <CheckCircle className="h-4 w-4 shrink-0 mt-0.5" /> : <XCircle className="h-4 w-4 shrink-0 mt-0.5" />}
+                          <span>{tunnelResult.message}</span>
+                        </div>
+                      )}
+
+                      {tunnelResult?.success && (
+                        <div className="rounded-lg border border-signal-green/30 bg-signal-green/5 p-3">
+                          <p className="text-xs font-medium text-signal-green mb-1">🎉 Tunnel created!</p>
+                          <p className="text-[11px] text-muted-foreground">
+                            DNS auto-configured. Your API will be available at <span className="font-mono text-foreground">https://{data.domain}</span> in a few minutes.
+                          </p>
                         </div>
                       )}
                     </div>
@@ -748,10 +743,31 @@ Star us on GitHub: github.com/fahimuntasin/kontroapi`}
                         Generate Config
                       </button>
                       {data.nginxConfig && (
-                        <NginxConfigBlock
-                          config={data.nginxConfig}
-                          certbotCmd={data.nginxCertbotCmd || 'sudo certbot --nginx -d ' + (data.domain || 'example.com')}
-                        />
+                        <>
+                          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+                            <p className="text-xs font-medium text-amber-400 mb-2">📌 Before SSL — add DNS record:</p>
+                            <div className="font-mono text-[12px] text-foreground/80 bg-black/30 rounded px-3 py-2">
+                              Type: <span className="text-cyan-400">A</span> &nbsp; Name: <span className="text-cyan-400">@</span> &nbsp; Value: <span className="text-green-400">YOUR_SERVER_IP</span>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground mt-2">
+                              Point your domain to your server's IP address. Wait 1-5 min for DNS propagation.
+                            </p>
+                          </div>
+                          <NginxConfigBlock config={data.nginxConfig} certbotCmd={data.nginxCertbotCmd || 'sudo certbot --nginx -d ' + (data.domain || 'example.com')} />
+                          {data.nginxInstructions && data.nginxInstructions.length > 0 && (
+                            <div className="rounded-lg border border-border bg-muted/20 p-3">
+                              <p className="text-xs font-medium text-muted-foreground mb-2">Installation steps:</p>
+                              <ol className="space-y-1.5">
+                                {data.nginxInstructions.filter((s: string) => s.trim()).map((step: string, i: number) => (
+                                  <li key={i} className="flex items-start gap-2 text-[11px] text-muted-foreground">
+                                    <span className="font-mono text-foreground/50 mt-0.5">{i + 1}.</span>
+                                    <span className="font-mono">{step}</span>
+                                  </li>
+                                ))}
+                              </ol>
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   )}
