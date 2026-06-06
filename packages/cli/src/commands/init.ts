@@ -1,12 +1,10 @@
 import chalk from 'chalk';
 import inquirer from 'inquirer';
-import ora from 'ora';
 import { execSync, spawn } from 'child_process';
 import { existsSync, mkdirSync, writeFileSync, readFileSync, chmodSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { randomBytes } from 'crypto';
-import { Client } from 'pg';
 
 const CONFIG_DIR = process.env.KONTROAPI_HOME || join(process.env.HOME || '.', '.kontroapi');
 const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
@@ -130,15 +128,26 @@ export async function initCommand(opts: any) {
   const composeContent = generateDockerCompose(config as KontroConfig);
   writeFileSync(DOCKER_COMPOSE_FILE, composeContent);
 
-  console.log(chalk.bold.green('\n  ✓ KontroAPI initialized successfully!\n'));
-  console.log(chalk.white('  Next steps:'));
-  console.log(chalk.cyan('    kontroapi start -d') + chalk.gray('         — start the gateway'));
-  console.log(chalk.cyan(`    http://localhost:${config.ports!.dashboard}`) + chalk.gray(' — open setup wizard'));
-  console.log(chalk.cyan('    kontroapi status') + chalk.gray('        — check service status'));
   console.log('');
-  console.log(chalk.yellow('  ⚡ Complete setup in your browser:'));
-  console.log(chalk.gray('  Create admin account, configure domain,'));
-  console.log(chalk.gray('  and activate license — all from the UI.'));
+  console.log(chalk.bold.hex('#00D26A')('  ╔══════════════════════════════════════════╗'));
+  console.log(chalk.bold.hex('#00D26A')('  ║       🚀  KontroAPI is Ready!            ║'));
+  console.log(chalk.bold.hex('#00D26A')('  ╚══════════════════════════════════════════╝'));
+  console.log('');
+  console.log(chalk.white('  ✓ ') + chalk.gray('docker-compose.yml  — generated'));
+  console.log(chalk.white('  ✓ ') + chalk.gray('.env with secrets   — generated'));
+  console.log(chalk.white('  ✓ ') + chalk.gray('config.json         — saved'));
+  console.log('');
+  console.log(chalk.cyan('  Start the gateway:'));
+  console.log(chalk.bold.white('    kontroapi start -d'));
+  console.log('');
+  console.log(chalk.cyan(`  Open setup wizard:`));
+  console.log(chalk.bold.white(`    http://localhost:${config.ports!.dashboard}/setup`));
+  console.log('');
+  console.log(chalk.yellow('  ⚡  Create admin, configure domain, activate license'));
+  console.log(chalk.yellow('  — all from the browser. Zero terminal commands.'));
+  console.log('');
+  console.log(chalk.gray('  Built with ❤️  using Baileys · Node.js · TypeScript · Docker'));
+  console.log(chalk.gray('  ⭐  Star us on GitHub: github.com/fahimuntasin/kontroapi'));
   console.log('');
 }
 
@@ -316,42 +325,3 @@ ${config.billing.apiKey ? `NAAFIPAY_API_KEY=${config.billing.apiKey}\nNAAFIPAY_W
 `;
 }
 
-async function initDatabase(dbUrl: string) {
-  const client = new Client({ connectionString: dbUrl });
-  await client.connect();
-  await client.end();
-}
-
-async function seedAdmin(config: KontroConfig) {
-  const hostAccessible = config.database.host === 'postgres'
-    ? config.database.url.replace('@postgres:', '@localhost:')
-    : config.database.url;
-  const client = new Client({ connectionString: hostAccessible });
-  try {
-    await client.connect();
-  } catch (e: any) {
-    console.log(chalk.yellow(`  ⚠ Could not connect to DB at ${hostAccessible} to seed admin: ${e.message}`));
-    console.log(chalk.yellow(`  The admin will be created by the engine entrypoint on first start.`));
-    return;
-  }
-
-  await client.query(`
-    CREATE TABLE IF NOT EXISTS users (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      email TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
-      full_name TEXT,
-      role TEXT NOT NULL DEFAULT 'user',
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    );
-  `);
-
-  await client.query(`
-    INSERT INTO users (email, password_hash, full_name, role)
-    VALUES ($1, $2, $3, 'admin')
-    ON CONFLICT (email) DO NOTHING
-  `, [config.admin.email, config.admin.passwordHash, 'Administrator']);
-
-  await client.end();
-}

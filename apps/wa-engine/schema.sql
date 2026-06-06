@@ -267,3 +267,18 @@ CREATE TRIGGER trg_sub_touch BEFORE UPDATE ON subscriptions
 DROP TRIGGER IF EXISTS trg_pending_touch ON pending_checkouts;
 CREATE TRIGGER trg_pending_touch BEFORE UPDATE ON pending_checkouts
   FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
+
+
+-- System settings (key-value store for setup completion, activation, etc.)
+CREATE TABLE IF NOT EXISTS system_settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Activation requests (for community license key requests)
+CREATE TABLE IF NOT EXISTS activation_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

@@ -84,6 +84,9 @@ server {
           config,
           certbotCommand: `certbot --nginx -d ${domain}`,
           instructions: [
+            `📌 DNS: Add an A record for ${domain} → YOUR_SERVER_IP`,
+            `Wait for DNS to propagate (1-5 minutes)`,
+            ``,
             `Copy the config to /etc/nginx/sites-available/${domain}`,
             `Create symlink: ln -s /etc/nginx/sites-available/${domain} /etc/nginx/sites-enabled/`,
             `Test config: nginx -t`,

@@ -26,7 +26,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 type DomainType = 'cloudflare' | 'nginx' | 'manual';
-type SetupStep = 0 | 1 | 2 | 3 | 4;
+type SetupStep = 0 | 1 | 2 | 3 | 4 | 5;
 
 interface WizardData {
   email: string;
@@ -42,7 +42,7 @@ interface WizardData {
   activated: boolean;
 }
 
-const STEP_LABELS = ['Admin', 'Domain', 'Activate', 'Review', 'Done'];
+const STEP_LABELS = ['Welcome', 'Admin', 'Domain', 'Activate', 'Review', 'Done'];
 
 const DEFAULT_DATA: WizardData = {
   email: 'admin@kontroapi.local',
@@ -96,7 +96,7 @@ function isValidEmail(email: string) {
 function ProgressBar({ currentStep, completed }: { currentStep: number; completed: Set<number> }) {
   return (
     <div className="flex items-center justify-center gap-0 mb-8">
-      {[0, 1, 2, 3, 4].map((step, i) => (
+      {[0, 1, 2, 3, 4, 5].map((step, i) => (
         <div key={step} className="flex items-center">
           <div className="flex flex-col items-center">
             <div
@@ -128,7 +128,7 @@ function ProgressBar({ currentStep, completed }: { currentStep: number; complete
               {STEP_LABELS[step]}
             </span>
           </div>
-          {i < 4 && (
+          {i < 5 && (
             <div
               className={cn(
                 'mx-1 h-[2px] w-8 rounded-full transition-all duration-500 sm:w-12',
@@ -254,7 +254,7 @@ export default function SetupPage() {
     try {
       await apiPost('/api/setup/admin', { email: data.email, password: data.password });
       toast.success('Admin account created.');
-      navigate(1);
+      navigate(2);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to create admin account.';
       setError(msg);
@@ -270,7 +270,7 @@ export default function SetupPage() {
     setError(null);
     if (data.domainType === 'cloudflare' && data.domain && data.cloudflareToken) {
       if (tunnelResult?.success) {
-        navigate(2);
+        navigate(3);
         return;
       }
     }
@@ -284,7 +284,7 @@ export default function SetupPage() {
         ...(data.domainType === 'nginx' ? { domain: data.domain } : {}),
       });
       toast.success('Domain configuration saved.');
-      navigate(2);
+      navigate(3);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to save domain config.';
       setError(msg);
@@ -362,7 +362,7 @@ export default function SetupPage() {
     }
     setActivating(true);
     try {
-      await apiPost('/api/setup/activate', { key: data.licenseKey });
+      await apiPost('/api/setup/activate', { action: 'activate', key: data.licenseKey });
       setData((prev) => ({ ...prev, activated: true }));
       toast.success('License activated successfully.');
     } catch (err: unknown) {
@@ -382,7 +382,7 @@ export default function SetupPage() {
     }
     setRequesting(true);
     try {
-      await apiPost('/api/setup/activate', { email: data.requestEmail });
+      await apiPost('/api/setup/activate', { action: 'request', email: data.requestEmail });
       toast.success('Free key requested. Check your email!');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to request free key.';
@@ -401,7 +401,7 @@ export default function SetupPage() {
     try {
       await apiPost('/api/setup/finish');
       toast.success('Setup complete!');
-      navigate(4);
+      navigate(5);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to complete setup.';
       setError(msg);
@@ -414,7 +414,7 @@ export default function SetupPage() {
   /* ── Go Back ──────────────────────────────────────────────── */
 
   const handleBack = () => {
-    if (step > 0 && step < 4) {
+    if (step > 0 && step < 5) {
       setDirection(-1);
       setError(null);
       setStep((prev) => (prev - 1) as SetupStep);
@@ -469,8 +469,62 @@ export default function SetupPage() {
               exit="exit"
               transition={{ duration: 0.3, ease: 'easeInOut' }}
             >
-              {/* ── Step 0: Admin Account ──────────────────── */}
+              {/* ── Step 0: Welcome ────────────────────────── */}
               {step === 0 && (
+                <div className="space-y-5">
+                  <div className="rounded-xl border border-border/50 bg-black p-4 sm:p-6 overflow-x-auto">
+                    <div className="flex items-center gap-1.5 mb-3">
+                      <div className="h-2.5 w-2.5 rounded-full bg-[#FF5F57]" />
+                      <div className="h-2.5 w-2.5 rounded-full bg-[#FFBD2E]" />
+                      <div className="h-2.5 w-2.5 rounded-full bg-[#28CA41]" />
+                    </div>
+                    <pre className="font-mono text-green-400 text-[11px] sm:text-sm leading-relaxed whitespace-pre">
+{`╔══════════════════════════════════════════════╗
+║          🚀 Welcome to KontroAPI             ║
+║     Open Source WhatsApp API Gateway          ║
+╚══════════════════════════════════════════════╝
+
+Built with open source:
+  ⚡ Baileys — WhatsApp multi-device library
+  🟢 Node.js — JavaScript runtime
+  📘 TypeScript — Type-safe JavaScript
+  🐳 Docker — Container runtime
+  🗄️  PostgreSQL — Database
+  ⚡ Redis — Message queue
+  📨 BullMQ — Job queue
+  ⚛️  React + Next.js — Dashboard
+  🌐 Express — API server
+  🧩 n8n — Workflow automation
+
+Self-host. No vendor lock-in. AGPL-3.0.
+Star us on GitHub: github.com/fahimuntasin/kontroapi`}
+                    </pre>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => navigate(1)}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-base font-semibold text-primary-foreground transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/25"
+                  >
+                    Get Started
+                    <ArrowRight className="h-5 w-5" />
+                  </button>
+
+                  <div className="text-center">
+                    <a
+                      href="https://github.com/fahimuntasin/kontroapi"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      ⭐ Star on GitHub
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {/* ── Step 1: Admin Account ──────────────────── */}
+              {step === 1 && (
                 <div className="space-y-5">
                   <div>
                     <h2 className="text-lg font-semibold text-foreground">Create Admin Account</h2>
@@ -558,8 +612,8 @@ export default function SetupPage() {
                 </div>
               )}
 
-              {/* ── Step 1: Domain Setup ───────────────────── */}
-              {step === 1 && (
+              {/* ── Step 2: Domain Setup ───────────────────── */}
+              {step === 2 && (
                 <div className="space-y-5">
                   <div>
                     <h2 className="text-lg font-semibold text-foreground">Domain Setup</h2>
@@ -740,8 +794,8 @@ export default function SetupPage() {
                 </div>
               )}
 
-              {/* ── Step 2: Activation ─────────────────────── */}
-              {step === 2 && (
+              {/* ── Step 3: Activation ─────────────────────── */}
+              {step === 3 && (
                 <div className="space-y-5">
                   <div>
                     <h2 className="text-lg font-semibold text-foreground">Activate Your License</h2>
@@ -835,7 +889,7 @@ export default function SetupPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => navigate(3)}
+                      onClick={() => navigate(4)}
                       className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-all hover:bg-primary/90"
                     >
                       <ArrowRight className="h-4 w-4" />
@@ -845,8 +899,8 @@ export default function SetupPage() {
                 </div>
               )}
 
-              {/* ── Step 3: Review ─────────────────────────── */}
-              {step === 3 && (
+              {/* ── Step 4: Review ─────────────────────────── */}
+              {step === 4 && (
                 <div className="space-y-5">
                   <div>
                     <h2 className="text-lg font-semibold text-foreground">Review Your Setup</h2>
@@ -928,8 +982,8 @@ export default function SetupPage() {
                 </div>
               )}
 
-              {/* ── Step 4: Done ────────────────────────────── */}
-              {step === 4 && (
+              {/* ── Step 5: Done ────────────────────────────── */}
+              {step === 5 && (
                 <div className="space-y-6 text-center">
                   <motion.div
                     initial={{ scale: 0 }}
