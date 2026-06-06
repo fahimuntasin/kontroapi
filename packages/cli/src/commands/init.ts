@@ -149,6 +149,21 @@ export async function initCommand(opts: any) {
   console.log(chalk.gray('  Built with ❤️  using Baileys · Node.js · TypeScript · Docker'));
   console.log(chalk.gray('  ⭐  Star us on GitHub: github.com/fahimuntasin/kontroapi'));
   console.log('');
+
+  process.stdout.write(chalk.gray('\n  Press ENTER to see the open source story, or wait 5s to skip...\n  '));
+  process.stdin.setRawMode?.(true);
+  process.stdin.resume();
+  const keyPromise = new Promise<void>((resolve) => {
+    const timeout = setTimeout(() => { process.stdin.setRawMode?.(false); process.stdin.pause(); resolve(); }, 5000);
+    process.stdin.once('data', () => { clearTimeout(timeout); process.stdin.setRawMode?.(false); process.stdin.pause(); resolve(); });
+  });
+  await keyPromise;
+  try {
+    const { cinematicExperience } = await import('./cinematic.js');
+    await cinematicExperience();
+  } catch {
+    console.log(chalk.gray('\n  (cinematic experience skipped)'));
+  }
 }
 
 function checkDocker(): boolean {
