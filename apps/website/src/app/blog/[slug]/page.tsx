@@ -86,14 +86,14 @@ export default async function BlogPostPage({
     <div className="mx-auto max-w-3xl px-4 py-20 sm:px-6">
       <Link
         href="/blog"
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        className="inline-flex items-center gap-1 text-sm text-default transition-colors hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to blog
       </Link>
 
       <article className="mt-8">
-        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+        <div className="flex items-center gap-3 text-sm text-default">
           <time dateTime={post.date}>{post.date}</time>
           <span aria-hidden="true">·</span>
           <span>{post.readTime}</span>
@@ -107,7 +107,7 @@ export default async function BlogPostPage({
           {post.content.map((paragraph, index) => (
             <p
               key={index}
-              className="text-base leading-relaxed text-muted-foreground"
+              className="text-base leading-relaxed text-default"
             >
               {paragraph}
             </p>
@@ -115,12 +115,11 @@ export default async function BlogPostPage({
         </div>
       </article>
 
-      <div className="mt-16 border-t border-border/40 pt-8">
+      <div className="mt-16 border-t border-border pt-8">
         <Link
           href="/blog"
           className={cn(
-            'inline-flex items-center gap-2 text-sm font-medium',
-            'text-accent-blue-bright hover:underline'
+            'inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline'
           )}
         >
           <ArrowLeft className="h-4 w-4" />

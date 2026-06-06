@@ -11,7 +11,7 @@ export default function KontroApiDocPage() {
         <h2 className="font-heading text-xl font-semibold text-foreground">
           What is KontroAPI?
         </h2>
-        <p className="mt-3 leading-relaxed text-muted-foreground">
+        <p className="mt-3 leading-relaxed text-default">
           KontroAPI is an open-source, self-hosted WhatsApp Business API gateway
           that lets you send and receive WhatsApp messages through a simple REST
           API. Built on the Baileys library, it provides a production-ready
@@ -38,9 +38,9 @@ export default function KontroApiDocPage() {
           ].map((feature) => (
             <li
               key={feature}
-              className="flex items-start gap-3 text-muted-foreground"
+              className="flex items-start gap-3 text-default"
             >
-              <span className="mt-1.5 block h-1.5 w-1.5 shrink-0 rounded-full bg-accent-blue-bright" />
+              <span className="mt-1.5 block h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
               {feature}
             </li>
           ))}
@@ -51,7 +51,7 @@ export default function KontroApiDocPage() {
         <h2 className="font-heading text-xl font-semibold text-foreground">
           Architecture
         </h2>
-        <p className="mt-3 leading-relaxed text-muted-foreground">
+        <p className="mt-3 leading-relaxed text-default">
           KontroAPI uses a microservices architecture with the following
           components:
         </p>
@@ -74,11 +74,11 @@ export default function KontroApiDocPage() {
               desc: 'Persistent storage for messages, sessions, contacts, and user accounts.',
             },
           ].map((item) => (
-            <li key={item.name} className="rounded-xl border border-border/40 p-4">
+            <li key={item.name} className="rounded-xl border border-border p-4">
               <h3 className="font-heading text-sm font-semibold text-foreground">
                 {item.name}
               </h3>
-              <p className="mt-1 text-sm text-muted-foreground">{item.desc}</p>
+              <p className="mt-1 text-sm text-default">{item.desc}</p>
             </li>
           ))}
         </ul>
@@ -90,10 +90,10 @@ export default function KontroApiDocPage() {
         </h2>
         <div
           className={cn(
-            'code-block mt-4 overflow-x-auto p-4 sm:p-6'
+            'mt-4 overflow-x-auto rounded-xl border border-border bg-black p-4 sm:p-6'
           )}
         >
-          <pre className="text-[13px] leading-7">
+          <pre className="font-mono text-[13px] leading-7">
             <code>
               <span className="text-gray-400">
                 $ npm install -g @kontroapis/cli{'\n'}
@@ -107,7 +107,7 @@ export default function KontroApiDocPage() {
               <span className="text-gray-400">
                 $ curl http://localhost:3000/health{'\n'}
               </span>
-              <span className="text-accent-blue-bright">
+              <span className="text-blue-400">
                 {'  '}
                 {'{'}&quot;status&quot;:&quot;ok&quot;,&quot;version&quot;:&quot;0.1.0&quot;
                 {'}'}

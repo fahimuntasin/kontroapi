@@ -2,45 +2,44 @@
 
 import { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
-import { Server, Zap, Shield, Layout, Puzzle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Server, Zap, Shield, Layout, Puzzle, MessageCircle } from 'lucide-react';
 
 const features = [
   {
     icon: Server,
     title: 'Self-Hosted',
     description:
-      'Deploy anywhere. Your infrastructure, your rules. Docker compose up in 30 seconds.',
+      'Deploy anywhere. Your infra, your rules. Docker compose up in 30 seconds.',
   },
   {
     icon: Zap,
     title: 'Instant Messaging',
     description:
-      'Send & receive WhatsApp messages via REST API. Queue-based delivery with BullMQ + Redis.',
+      'Send & receive WhatsApp via REST API. Queue-based with BullMQ + Redis.',
   },
   {
     icon: Shield,
     title: 'Secure by Default',
     description:
-      'API key auth, JWT tokens, webhook signature verification, rate limiting built-in.',
+      'API key auth, JWT tokens, webhook signature verification, rate limiting.',
   },
   {
     icon: Layout,
     title: 'Dashboard UI',
     description:
-      'Beautiful dashboard to manage sessions, view logs, monitor usage. Dark theme, glass-card design.',
+      'Manage sessions, view logs, monitor usage. Dark theme, clean design.',
   },
   {
     icon: Puzzle,
     title: 'Extensible',
     description:
-      'Open source AGPL-3.0. Fork it, extend it, build on it. n8n node included.',
+      'Open source AGPL-3.0. Fork it, extend it. n8n node included.',
   },
   {
-    icon: Zap,
+    icon: MessageCircle,
     title: 'SMS Gateway Ready',
     description:
-      'Integrated SMS fallback via syssms.com. OTP verification, notifikasi service built-in.',
+      'SMS fallback via syssms.com. OTP verification built-in.',
   },
 ];
 
@@ -59,20 +58,15 @@ function FeatureCard({
       initial={{ opacity: 0, y: 30 }}
       animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
       transition={{ duration: 0.5, delay: index * 0.08, ease: 'easeOut' }}
-      className={cn(
-        'glass-card rounded-2xl p-6 transition-colors duration-300',
-        'hover:border-accent-blue-bright/50'
-      )}
+      className="flex h-full"
     >
-      <div className="inline-flex items-center justify-center rounded-xl bg-accent-blue-soft p-3">
-        <Icon className="h-5 w-5 text-accent-blue-bright" />
+      <div className="rounded-xl border border-border bg-card p-6 hover:border-foreground/20 transition-all">
+        <div className="mb-3 inline-flex items-center justify-center rounded-lg bg-muted p-2.5">
+          <Icon className="h-5 w-5 text-primary" />
+        </div>
+        <h3 className="font-heading font-semibold text-sm">{title}</h3>
+        <p className="mt-1 text-sm text-default">{description}</p>
       </div>
-      <h3 className="mt-4 font-heading text-base font-semibold text-foreground">
-        {title}
-      </h3>
-      <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-        {description}
-      </p>
     </motion.div>
   );
 }
@@ -90,8 +84,10 @@ export function Features() {
         className="mx-auto max-w-7xl"
       >
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="section-heading font-heading">Everything You Need</h2>
-          <p className="section-subheading mx-auto">
+          <h2 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
+            Everything You Need
+          </h2>
+          <p className="mt-4 text-base text-default">
             Production-ready WhatsApp gateway with everything built-in.
           </p>
         </div>

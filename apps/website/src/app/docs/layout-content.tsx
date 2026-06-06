@@ -23,11 +23,12 @@ export function DocsLayoutContent({
             onClick={() => setSidebarOpen(false)}
           />
           <div className="fixed inset-y-0 left-0 z-50 w-[260px] bg-background lg:hidden">
-            <div className="flex items-center justify-between border-b border-border/40 px-4 py-4">
-              <span className="font-heading font-semibold">Docs</span>
+            <div className="flex items-center justify-between border-b border-border px-4 py-4">
+              <span className="font-heading text-sm font-semibold">Docs</span>
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="rounded-lg p-1 text-muted-foreground hover:text-foreground"
+                className="inline-flex items-center justify-center rounded-md p-2 text-default hover:text-foreground hover:bg-muted transition-colors"
+                aria-label="Close sidebar"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -41,8 +42,7 @@ export function DocsLayoutContent({
         <button
           onClick={() => setSidebarOpen(true)}
           className={cn(
-            'mb-6 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:text-foreground lg:hidden',
-            'border border-border/40'
+            'mb-6 inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-all duration-150 hover:border-foreground/20 hover:bg-muted lg:hidden'
           )}
         >
           <Menu className="h-4 w-4" />

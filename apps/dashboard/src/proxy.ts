@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
-const PUBLIC_ROUTES = ['/', '/login', '/register'];
+const PUBLIC_ROUTES = ['/', '/login', '/register', '/setup'];
 const API_ROUTES_NO_AUTH = [
   '/api/auth/otp-send',
   '/api/auth/otp-verify',
@@ -11,6 +11,11 @@ const API_ROUTES_NO_AUTH = [
   '/api/auth/register',
   '/api/auth/logout',
   '/api/webhooks/naafipay',
+  '/api/setup/check',
+  '/api/setup/admin',
+  '/api/setup/domain',
+  '/api/setup/activate',
+  '/api/setup/finish',
 ];
 
 const JWT_SECRET = new TextEncoder().encode(
@@ -36,6 +41,13 @@ export async function proxy(request: NextRequest) {
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
   const { pathname } = request.nextUrl;
+
+  if (pathname === '/setup' || pathname.startsWith('/api/setup/') || pathname === '/login' || pathname === '/register') return response;
+
+  const setupComplete = process.env.KONTROAPI_SETUP_COMPLETE === 'true';
+  if (!setupComplete) {
+    return NextResponse.redirect(new URL('/setup', request.url));
+  }
 
   if (PUBLIC_ROUTES.some((r) => pathname === r)) return response;
   if (API_ROUTES_NO_AUTH.some((r) => pathname.startsWith(r))) return response;

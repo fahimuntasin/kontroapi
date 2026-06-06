@@ -92,33 +92,16 @@ export async function initCommand(opts: any) {
   if (useDefaults) {
     config.branding = { name: 'KontroAPI', supportEmail: 'support@localhost' };
   } else {
-    const branding = await inquirer.prompt([
-      { type: 'input', name: 'name', message: 'Instance name:', default: 'KontroAPI' },
-      { type: 'input', name: 'supportEmail', message: 'Support email:', default: 'support@localhost' },
-    ]);
-    config.branding = branding;
+    config.branding = { name: 'KontroAPI', supportEmail: 'support@localhost' };
   }
 
-  let adminEmail: string, adminPassword: string;
-  if (useDefaults) {
-    adminEmail = 'admin@localhost';
-    adminPassword = randomBytes(12).toString('base64url');
-    console.log(chalk.yellow(`\n  Default admin: ${adminEmail}`));
-    console.log(chalk.yellow(`  Auto-generated password: ${adminPassword}`));
-    console.log(chalk.gray('  Save this — you will not see it again.\n'));
-  } else {
-    const admin = await inquirer.prompt([
-      { type: 'input', name: 'email', message: 'Admin email:', default: 'admin@localhost', validate: (v: string) => v.includes('@') || 'Valid email required' },
-      { type: 'password', name: 'password', message: 'Admin password:', mask: '*', validate: (v: string) => v.length >= 8 || 'Min 8 chars' },
-    ]);
-    adminEmail = admin.email;
-    adminPassword = admin.password;
-  }
+  const adminEmail = 'admin@kontroapi.local';
+  const adminPassword = randomBytes(12).toString('base64url');
 
   const { createHash } = await import('crypto');
   config.admin = {
     email: adminEmail,
-    passwordHash: createHash('sha256').update(adminPassword).digest('hex'),
+    passwordHash: createHash('sha256').update(adminPassword + 'kontroapi_salt_v1').digest('hex'),
     createdAt: new Date().toISOString(),
   };
 
@@ -126,67 +109,16 @@ export async function initCommand(opts: any) {
     const parsed = parseDbUrl(opts.dbUrl);
     config.database = { url: opts.dbUrl, ...parsed };
   } else {
-    if (useDefaults) {
-      config.database = { url: 'postgres://kontroapi:kontroapi@postgres:5432/kontroapi', host: 'postgres', port: 5432, user: 'kontroapi', password: 'kontroapi', name: 'kontroapi' };
-    } else {
-      const { dbChoice } = await inquirer.prompt([{
-        type: 'list',
-        name: 'dbChoice',
-        message: 'Database setup:',
-        choices: [
-          { name: '🐳 Bundled Postgres container (recommended)', value: 'bundled' },
-          { name: '🔗 Use existing Postgres (provide connection string)', value: 'external' },
-        ],
-      }]);
-      if (dbChoice === 'bundled') {
-        config.database = { url: 'postgres://kontroapi:kontroapi@postgres:5432/kontroapi', host: 'postgres', port: 5432, user: 'kontroapi', password: 'kontroapi', name: 'kontroapi' };
-      } else {
-        const { url } = await inquirer.prompt([{ type: 'input', name: 'url', message: 'Postgres URL:', default: 'postgres://user:pass@host:5432/kontroapi' }]);
-        const parsed = parseDbUrl(url);
-        config.database = { url, ...parsed };
-      }
-    }
+    config.database = { url: 'postgres://kontroapi:kontroapi@postgres:5432/kontroapi', host: 'postgres', port: 5432, user: 'kontroapi', password: 'kontroapi', name: 'kontroapi' };
   }
 
   if (opts.redisUrl) {
     config.redis = { url: opts.redisUrl };
   } else {
-    if (useDefaults) {
-      config.redis = { url: 'redis://redis:6379' };
-    } else {
-      const { redisChoice } = await inquirer.prompt([{
-        type: 'list',
-        name: 'redisChoice',
-        message: 'Redis setup:',
-        choices: [
-          { name: '🐳 Bundled Redis container (recommended)', value: 'bundled' },
-          { name: '🔗 Use existing Redis (provide connection string)', value: 'external' },
-        ],
-      }]);
-      if (redisChoice === 'bundled') {
-        config.redis = { url: 'redis://redis:6379' };
-      } else {
-        const { url } = await inquirer.prompt([{ type: 'input', name: 'url', message: 'Redis URL:', default: 'redis://localhost:6379' }]);
-        config.redis = { url };
-      }
-    }
+    config.redis = { url: 'redis://redis:6379' };
   }
 
-  if (useDefaults) {
-    config.billing = { enabled: false, provider: 'none' };
-  } else {
-    const { billingEnabled } = await inquirer.prompt([{ type: 'confirm', name: 'billingEnabled', message: 'Enable billing (NaafiPay)?', default: false }]);
-    config.billing = { enabled: billingEnabled, provider: 'none' };
-    if (billingEnabled) {
-      const np = await inquirer.prompt([
-        { type: 'input', name: 'apiKey', message: 'NaafiPay API key:' },
-        { type: 'input', name: 'webhookSecret', message: 'NaafiPay webhook secret:' },
-      ]);
-      config.billing.apiKey = np.apiKey;
-      config.billing.webhookSecret = np.webhookSecret;
-      config.billing.provider = 'naafipay';
-    }
-  }
+  config.billing = { enabled: false, provider: 'none' };
 
   writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
   chmodSync(CONFIG_FILE, 0o600);
@@ -198,30 +130,15 @@ export async function initCommand(opts: any) {
   const composeContent = generateDockerCompose(config as KontroConfig);
   writeFileSync(DOCKER_COMPOSE_FILE, composeContent);
 
-  if (config.database?.host !== 'postgres') {
-    const dbSpinner = ora('Initializing database schema...').start();
-    try {
-      await initDatabase(config.database!.url);
-      await seedAdmin(config as KontroConfig);
-      dbSpinner.succeed('Database initialized');
-    } catch (err: any) {
-      dbSpinner.fail(`Database init failed: ${err.message}`);
-      console.log(chalk.yellow('\nMake sure Postgres is running and reachable.'));
-      console.log(chalk.gray('Schema will run automatically when engine container starts.'));
-    }
-  }
-
   console.log(chalk.bold.green('\n  ✓ KontroAPI initialized successfully!\n'));
   console.log(chalk.white('  Next steps:'));
-  console.log(chalk.cyan('    kontroapi start') + chalk.gray('          — start the gateway'));
-  console.log(chalk.cyan(`    http://localhost:${config.ports!.dashboard}`) + chalk.gray(' — open dashboard'));
+  console.log(chalk.cyan('    kontroapi start -d') + chalk.gray('         — start the gateway'));
+  console.log(chalk.cyan(`    http://localhost:${config.ports!.dashboard}`) + chalk.gray(' — open setup wizard'));
   console.log(chalk.cyan('    kontroapi status') + chalk.gray('        — check service status'));
   console.log('');
-  if (useDefaults) {
-    console.log(chalk.yellow(`  Admin login: ${adminEmail} / ${adminPassword}`));
-  } else {
-    console.log(chalk.gray(`  Admin login: ${adminEmail}`));
-  }
+  console.log(chalk.yellow('  ⚡ Complete setup in your browser:'));
+  console.log(chalk.gray('  Create admin account, configure domain,'));
+  console.log(chalk.gray('  and activate license — all from the UI.'));
   console.log('');
 }
 
@@ -309,6 +226,7 @@ ${hasBundledDb ? '      postgres:\n        condition: service_healthy\n' : ''}${
       INTERNAL_OTP_SECRET: \${INTERNAL_OTP_SECRET}
       SESSION_ENCRYPTION_KEY: \${SESSION_ENCRYPTION_KEY}
       WEBHOOK_SECRET_ENCRYPTION_KEY: \${WEBHOOK_SECRET_ENCRYPTION_KEY}
+      BAILEYS_SESSIONS_DIR: /data/sessions
       PORT: 3000
     volumes:
       - ${DATA_DIR}/sessions:/data/sessions
@@ -405,8 +323,17 @@ async function initDatabase(dbUrl: string) {
 }
 
 async function seedAdmin(config: KontroConfig) {
-  const client = new Client({ connectionString: config.database.url });
-  await client.connect();
+  const hostAccessible = config.database.host === 'postgres'
+    ? config.database.url.replace('@postgres:', '@localhost:')
+    : config.database.url;
+  const client = new Client({ connectionString: hostAccessible });
+  try {
+    await client.connect();
+  } catch (e: any) {
+    console.log(chalk.yellow(`  ⚠ Could not connect to DB at ${hostAccessible} to seed admin: ${e.message}`));
+    console.log(chalk.yellow(`  The admin will be created by the engine entrypoint on first start.`));
+    return;
+  }
 
   await client.query(`
     CREATE TABLE IF NOT EXISTS users (

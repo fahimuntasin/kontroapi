@@ -4,294 +4,85 @@
 
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/Node-%3E%3D20-green)]()
-[![npm](https://img.shields.io/npm/v/kontroapi)](https://www.npmjs.com/package/kontroapi)
-[![Docker](https://img.shields.io/docker/v/kontroapi/kontroapi?label=docker)](https://hub.docker.com/r/kontroapi/kontroapi)
+[![npm](https://img.shields.io/npm/v/@kontroapis/cli)](https://www.npmjs.com/package/@kontroapis/cli)
 
-KontroAPI is a self-hostable WhatsApp Business API platform built on [Baileys](https://github.com/WhiskeySockets/Baileys). It gives you a complete REST API, multi-session management, webhooks, message logs, a chat inbox UI, and an API-key system — all under your control.
+KontroAPI is a self-hostable WhatsApp Business API platform built on [Baileys](https://github.com/WhiskeySockets/Baileys). REST API, multi-session, webhooks, chat inbox, API keys — all under your control.
 
 ---
 
-## Quick Start (30 seconds)
+## Quick Start
 
 ```bash
-# Install
-npm install -g kontroapi
+# Install CLI
+npm install -g @kontroapis/cli
 
-# Initialize (Postgres + Redis + admin + schema, all auto)
-kontroapi init
+# Generate config + docker-compose
+kontroapi init -y
 
-# Start
-kontroapi start
+# Start the gateway
+kontroapi start -d
 ```
 
-Open `http://localhost:3001` and log in with the admin credentials shown.
+Then open `http://localhost:3001` — the web setup wizard will guide you through:
+- Creating your admin account
+- Configuring your domain (Cloudflare Tunnel or Nginx auto-setup)
+- Activating your license
 
-That's it. No cloud account, no Supabase, no NaafiPay, no manual setup.
-
----
-
-## Distribution
-
-| Method | Command |
-|---|---|
-| **npm** (recommended) | `npm install -g kontroapi` then `kontroapi init` |
-| **Docker** | `docker run -p 3000:3000 -p 3001:3001 -v ~/.kontroapi:/data kontroapi/kontroapi` |
-| **Single binary** | `curl -fsSL https://kontroapi.com/install.sh \| bash` |
+**Zero terminal commands. Everything in the browser.**
 
 ---
 
 ## Features
 
-### Messaging
-- ✅ Send/receive text, image, video, audio, document, sticker, location, contact, poll, reaction
-- ✅ Group messaging, mentions, admin actions
-- ✅ Channels/Newsletter support
-- ✅ Message status tracking (queued → sent → delivered → read)
-- ✅ Bulk messaging
-- ✅ Message logs with search
-
-### Sessions
-- ✅ Multi-session — run as many WhatsApp accounts as you want on one instance
-- ✅ QR code pairing (shown in dashboard)
-- ✅ Per-session webhook URL + HMAC secret
-- ✅ Per-session API key
-- ✅ Auto-reconnect on disconnect
-- ✅ Session events (connected, disconnected, banned, qr_generated)
-
-### Webhooks
-- ✅ `message.received`, `message.sent`, `message.status`, `session.status`
-- ✅ HMAC-SHA256 signature verification
-- ✅ Retry with exponential backoff
-- ✅ Per-session webhook URL or global
-
-### Dashboard
-- ✅ Real-time chat inbox (Supabase-style real-time)
-- ✅ Sessions management with QR pairing
-- ✅ Message logs viewer
-- ✅ Webhook configuration
-- ✅ API key management (Personal Access Tokens)
-- ✅ Profile, settings, billing
-- ✅ Dark mode, glass cards, blue-violet theme
-
-### API
-- ✅ REST API with OpenAPI/Swagger docs at `/api/docs`
-- ✅ API key auth (Bearer token)
-- ✅ Webhook events with HMAC verify
-- ✅ Rate limiting per session
-- ✅ Pagination + filters on list endpoints
-
-### Infrastructure
-- ✅ Local Postgres (sessions, users, logs, plans, subscriptions)
-- ✅ Local Redis (BullMQ queues for messages and webhooks)
-- ✅ Local file storage (S3-compatible adapters available)
-- ✅ Encryption at rest (AES-256-GCM)
-- ✅ Docker Compose included
-
----
+- 📨 **REST API** — send/receive WhatsApp messages
+- 🔐 **API Keys** — per-session tokens with scoped permissions
+- 🪝 **Webhooks** — real-time message delivery with HMAC signatures
+- 💬 **Chat Inbox** — web UI for viewing conversations
+- 📊 **Dashboard** — session management, logs, analytics
+- 🔄 **Multi-Session** — run multiple WhatsApp numbers
+- 📱 **SMS Gateway** — OTP verification + fallback delivery
+- 🧩 **n8n Integration** — drag-and-drop WhatsApp automation
+- 🐳 **Docker** — one command deploy with Postgres + Redis
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────┐
-│  KontroAPI Gateway (one process)                    │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────┐   │
-│  │ WA Engine    │  │ Dashboard    │  │ REST API │   │
-│  │ (Baileys)    │  │ (Next.js)    │  │ (Express)│   │
-│  └──────┬───────┘  └──────┬───────┘  └────┬─────┘   │
-│         └────────────────┬┴───────────────┘         │
-│                          │                          │
-│  ┌───────────────────────▼──────────────────────┐  │
-│  │  Local Postgres    │  Local Redis             │  │
-│  │  - users, sessions │  - message queue         │  │
-│  │  - chats, messages │  - webhook queue         │  │
-│  │  - logs            │                          │  │
-│  └──────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────┘
+┌─────────────┐     ┌──────────────┐     ┌─────────┐
+│  Dashboard  │────▶│    Engine    │────▶│ WhatsApp│
+│  (Next.js)  │     │  (Express)   │     │ (Baileys)│
+│  :3001      │     │  :3000       │     └─────────┘
+└─────────────┘     └──────┬───────┘
+                           │
+                    ┌──────┴───────┐
+                    │  BullMQ      │
+                    │  + Redis     │
+                    └──────────────┘
 ```
 
-Everything in one Node.js process. Postgres + Redis run in Docker containers (auto-started by `kontroapi init`) or connect to your own.
+## CLI Commands
 
----
+| Command | Description |
+|---|---|
+| `kontroapi init` | Generate docker-compose.yml + .env |
+| `kontroapi init -y` | Non-interactive, use defaults |
+| `kontroapi start` | Start in foreground |
+| `kontroapi start -d` | Start detached (background) |
+| `kontroapi stop` | Stop all services |
+| `kontroapi status` | Show container health |
+| `kontroapi update` | Update CLI + Docker images |
+| `kontroapi config` | View/edit configuration |
 
-## Configuration
+## Requirements
 
-`~/.kontroapi/config.json` is auto-generated by `kontroapi init`.
-
-```bash
-kontroapi config                    # show all
-kontroapi config ports.dashboard    # show single
-kontroapi config ports.dashboard 8080  # set
-```
-
-Common env vars (in `~/.kontroapi/.env`):
-
-| Var | Default | Description |
-|---|---|---|
-| `KONTROAPI_MODE` | `self-hosted` | `self-hosted` or `cloud` |
-| `DASHBOARD_PORT` | `3001` | Dashboard UI port |
-| `ENGINE_PORT` | `3000` | WA Engine API port |
-| `LOCAL_DB_URL` | `postgres://kontroapi:kontroapi@localhost:5433/kontroapi` | Postgres URL |
-| `REDIS_URL` | `redis://localhost:6380` | Redis URL |
-| `JWT_SECRET` | (auto) | JWT signing secret |
-| `INTERNAL_SECRET` | (auto) | Internal HMAC secret |
-| `BILLING_ENABLED` | `false` | Enable NaafiPay billing |
-| `NAAFIPAY_API_KEY` | — | Required if billing enabled |
-| `NAAFIPAY_WEBHOOK_SECRET` | — | Required if billing enabled |
-
----
-
-## CLI Reference
-
-```bash
-kontroapi init       # First-time setup (Postgres, Redis, admin, schema)
-kontroapi start      # Run gateway in foreground
-kontroapi start -d   # Run in background
-kontroapi stop       # Stop background process
-kontroapi status     # Show service status
-kontroapi update     # Update to latest version
-kontroapi config     # View/edit configuration
-```
-
----
-
-## API Quickstart
-
-```bash
-# 1. Get API key from dashboard: Settings → API Keys
-API_KEY="sk_..."
-
-# 2. Create a session
-curl -X POST http://localhost:3000/api/v1/whatsapp-sessions \
-  -H "Authorization: Bearer $API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"name": "my-bot"}'
-# Returns: { "session_id": "uuid", "status": "qr_pending" }
-
-# 3. Get QR code
-curl http://localhost:3000/api/v1/whatsapp-sessions/{id}/qr \
-  -H "Authorization: Bearer $API_KEY"
-# Returns: { "qr": "data:image/png;base64,..." }
-
-# 4. Send a message
-curl -X POST http://localhost:3000/api/v1/send-message \
-  -H "Authorization: Bearer $API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "session_id": "uuid",
-    "to": "8801320875770",
-    "type": "text",
-    "text": "Hello from KontroAPI!"
-  }'
-```
-
-Full API docs at `http://localhost:3000/api/docs` after start.
-
----
-
-## Webhook Setup
-
-```bash
-curl -X POST http://localhost:3000/api/v1/whatsapp-sessions/{id}/webhook \
-  -H "Authorization: Bearer $API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "url": "https://your-server.com/webhook",
-    "events": ["message.received", "session.status"],
-    "secret": "your-hmac-secret"
-  }'
-```
-
-Webhook payload (HMAC-SHA256 in `X-Signature` header):
-
-```json
-{
-  "event": "message.received",
-  "session_id": "uuid",
-  "data": {
-    "from": "8801320875770@s.whatsapp.net",
-    "type": "text",
-    "text": "Hello!"
-  },
-  "timestamp": "2026-06-04T12:00:00Z"
-}
-```
-
-Verify signature:
-```js
-const expected = crypto.createHmac('sha256', secret)
-  .update(JSON.stringify(payload))
-  .digest('hex');
-```
-
----
-
-## Development
-
-```bash
-git clone https://github.com/kontroapi/kontroapi.git
-cd kontroapi
-npm install
-npm run dev   # turbo orchestrates wa-engine + dashboard
-```
-
-Project structure:
-```
-kontroapi/
-├── apps/
-│   ├── wa-engine/        # Express + Baileys (REST API)
-│   └── dashboard/        # Next.js 15 + Tailwind
-├── packages/
-│   ├── shared/           # Shared types
-│   └── cli/              # `kontroapi` CLI tool
-├── supabase/
-│   └── migrations/       # SQL migrations
-└── docker-compose.yml    # Postgres + Redis
-```
-
----
+- Docker Engine 20.10+ & Docker Compose v2
+- Node.js 20+
+- 4 GB RAM recommended
+- 10 GB disk space
 
 ## License
 
-**AGPL-3.0** for self-hosted use.
-
-You can:
-- ✅ Use for personal/internal/company projects
-- ✅ Modify and distribute under AGPL
-- ✅ Run a self-hosted instance for free
-- ✅ Fork and contribute back
-
-You **cannot** offer it as a hosted SaaS without a separate commercial license from us. If you want to operate KontroAPI as a paid SaaS, contact us at [team@kontroapi.com](mailto:team@kontroapi.com) for a commercial license.
-
-See [LICENSE](LICENSE) for full terms.
+AGPL-3.0 — free for self-hosting. [Contact us](mailto:team@kontroapi.com) for commercial/SaaS licensing.
 
 ---
 
-## Why AGPL?
-
-The Baileys library and other open source WhatsApp libraries inspired this project. We believe WhatsApp API gateways should be self-hostable and open. AGPL protects that — your customers can run it themselves, but no one can wrap it as a paid SaaS without contributing back.
-
-If you're building internal tools, learning, or running a non-commercial setup, AGPL is perfect. If you want to operate a paid cloud version, we offer commercial licensing.
-
----
-
-## Support
-
-- 📖 Docs: https://docs.kontroapi.com
-- 💬 Discord: https://discord.gg/kontroapi
-- 🐛 Issues: https://github.com/kontroapi/kontroapi/issues
-- 📧 Email: team@kontroapi.com
-- 🐦 Twitter: [@kontroapi](https://twitter.com/kontroapi)
-
----
-
-## Contributing
-
-PRs welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## Acknowledgments
-
-Built on top of these amazing projects:
-- [Baileys](https://github.com/WhiskeySockets/Baileys) — WhatsApp Web API
-- [Next.js](https://nextjs.org/) — Dashboard
-- [BullMQ](https://bullmq.io/) — Job queues
-- [Supabase](https://supabase.com/) — Auth/storage inspiration
+**Built by [KontroAPI](https://kontroapi.com)**

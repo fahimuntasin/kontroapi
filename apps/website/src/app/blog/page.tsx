@@ -43,7 +43,7 @@ export default function BlogPage() {
       <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
         Blog
       </h1>
-      <p className="mt-2 text-muted-foreground">
+      <p className="mt-2 text-default">
         Updates, guides, and deep dives from the KontroAPI team.
       </p>
 
@@ -52,11 +52,11 @@ export default function BlogPage() {
           <Link key={post.slug} href={`/blog/${post.slug}`}>
             <article
               className={cn(
-                'glass-card rounded-2xl p-6 transition-all duration-300',
-                'hover:border-accent-blue-bright/50 hover:shadow-lg hover:shadow-accent-blue/5'
+                'rounded-xl border border-border bg-card p-6 transition-all duration-300',
+                'hover:border-primary/50 hover:shadow-lg'
               )}
             >
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <div className="flex items-center gap-3 text-sm text-default">
                 <time dateTime={post.date}>{post.date}</time>
                 <span aria-hidden="true">·</span>
                 <span>{post.readTime}</span>
@@ -64,10 +64,10 @@ export default function BlogPage() {
               <h2 className="mt-3 font-heading text-xl font-semibold text-foreground">
                 {post.title}
               </h2>
-              <p className="mt-2 text-muted-foreground leading-relaxed">
+              <p className="mt-2 text-default leading-relaxed">
                 {post.excerpt}
               </p>
-              <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-accent-blue-bright">
+              <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary">
                 Read more
                 <ArrowRight className="h-3 w-3" />
               </span>

@@ -1,6 +1,6 @@
 {
   "name": "@kontroapis/cli",
-  "version": "0.1.4",
+  "version": "0.1.13",
   "description": "Self-hostable WhatsApp Business API gateway — one command, full control",
   "type": "module",
   "main": "dist/index.js",

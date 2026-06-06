@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
-import Link from 'next/link';
+import NextLink from 'next/link';
 import { motion, useInView } from 'framer-motion';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -12,6 +12,7 @@ const tiers = [
     price: 'Free',
     description: 'Full source code. AGPL-3.0. Run anywhere.',
     highlighted: true,
+    badge: { label: 'Open Source' },
     features: [
       'Unlimited messages',
       'Unlimited sessions',
@@ -21,14 +22,19 @@ const tiers = [
       'n8n node',
       'Community support',
     ],
-    cta: { label: 'Get Started', href: '/docs', variant: 'outline' as const },
+    cta: {
+      label: 'Get Started',
+      href: '/docs',
+      variant: 'solid' as const,
+      disabled: false,
+    },
   },
   {
     name: 'Cloud',
     price: '$49/mo',
-    description: 'Managed hosting. We run it so you don&apos;t have to.',
+    description: 'Managed hosting. We run it so you don\'t have to.',
     highlighted: false,
-    badge: 'Popular',
+    badge: { label: 'Coming Soon' },
     features: [
       'Everything in Self-Hosted',
       'Managed hosting',
@@ -40,7 +46,8 @@ const tiers = [
     cta: {
       label: 'Coming Soon',
       href: '#',
-      variant: 'disabled' as const,
+      variant: 'outline' as const,
+      disabled: true,
     },
   },
   {
@@ -60,6 +67,7 @@ const tiers = [
       label: 'Contact Us',
       href: 'mailto:team@kontroapi.com',
       variant: 'outline' as const,
+      disabled: false,
     },
   },
 ];
@@ -74,66 +82,89 @@ function PricingCard({
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: '-50px' });
 
+  const renderCta = () => {
+    if (tier.cta.disabled) {
+      return (
+        <span
+          className={cn(
+            'inline-flex items-center justify-center w-full rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-foreground transition-all duration-150 opacity-50 cursor-not-allowed'
+          )}
+        >
+          {tier.cta.label}
+        </span>
+      );
+    }
+
+    if (tier.cta.href.startsWith('/')) {
+      return (
+        <NextLink
+          href={tier.cta.href}
+          className={cn(
+            'inline-flex items-center justify-center w-full rounded-lg px-5 py-2.5 text-sm font-medium transition-all duration-150',
+            tier.cta.variant === 'solid'
+              ? 'bg-foreground text-background shadow-sm hover:bg-foreground/80 hover:shadow-md'
+              : 'border border-border text-foreground hover:border-foreground/20 hover:bg-muted'
+          )}
+        >
+          {tier.cta.label}
+        </NextLink>
+      );
+    }
+
+    return (
+      <a
+        href={tier.cta.href}
+        className={cn(
+          'inline-flex items-center justify-center w-full rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-foreground transition-all duration-150 hover:border-foreground/20 hover:bg-muted'
+        )}
+      >
+        {tier.cta.label}
+      </a>
+    );
+  };
+
   return (
     <motion.div
       ref={ref}
       initial={{ opacity: 0, y: 30 }}
       animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
       transition={{ duration: 0.5, delay: index * 0.1, ease: 'easeOut' }}
-      className={cn(
-        'glass-card relative flex flex-col rounded-2xl p-6 sm:p-8',
-        tier.highlighted && 'animate-glow border-accent-blue-bright/40'
-      )}
+      className="flex h-full"
     >
-      {tier.badge && (
-        <span className="absolute -top-3 right-4 rounded-full bg-accent-blue px-3 py-1 text-xs font-semibold text-white">
-          {tier.badge}
-        </span>
-      )}
+      <div
+        className={cn(
+          'rounded-xl border border-border bg-card p-8 flex flex-col w-full',
+          tier.highlighted && 'ring-1 ring-primary/30'
+        )}
+      >
+        {tier.badge && (
+          <div className="mb-4">
+            <span className="bg-primary/10 text-primary text-xs rounded-full px-3 py-1">
+              {tier.badge.label}
+            </span>
+          </div>
+        )}
 
-      <h3 className="font-heading text-lg font-semibold text-foreground">
-        {tier.name}
-      </h3>
-      <div className="mt-3 flex items-baseline gap-1">
-        <span className="font-heading text-3xl font-bold text-foreground">
-          {tier.price}
-        </span>
-      </div>
-      <p className="mt-3 text-sm text-muted-foreground">{tier.description}</p>
-
-      <ul className="mt-8 flex-1 space-y-3">
-        {tier.features.map((feature) => (
-          <li key={feature} className="flex items-start gap-3 text-sm">
-            <Check className="mt-0.5 h-4 w-4 shrink-0 text-accent-blue-bright" />
-            <span className="text-muted-foreground">{feature}</span>
-          </li>
-        ))}
-      </ul>
-
-      <div className="mt-8">
-        {tier.cta.variant === 'disabled' ? (
-          <span
-            className={cn(
-              'inline-flex w-full items-center justify-center rounded-xl',
-              'border border-border/50 px-6 py-3 text-sm font-medium',
-              'text-muted-foreground/40 cursor-not-allowed'
-            )}
-          >
-            {tier.cta.label}
+        <h3 className="text-lg font-semibold">{tier.name}</h3>
+        <div className="mt-3 flex items-baseline gap-1">
+          <span className="font-heading text-3xl font-bold text-foreground">
+            {tier.price}
           </span>
-        ) : tier.cta.variant === 'outline' ? (
-          <Link
-            href={tier.cta.href}
-            className={cn(
-              'inline-flex w-full items-center justify-center',
-              tier.highlighted
-                ? 'cta-button'
-                : 'cta-button-outline border-accent-blue-bright/30 text-accent-blue-bright hover:bg-accent-blue-soft'
-            )}
-          >
-            {tier.cta.label}
-          </Link>
-        ) : null}
+        </div>
+        <p className="mt-3 text-sm text-default">{tier.description}</p>
+
+        <ul className="mt-8 flex-1 space-y-3">
+          {tier.features.map((feature) => (
+            <li key={feature} className="flex items-start gap-3 text-sm">
+              <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <span className="text-default">{feature}</span>
+            </li>
+          ))}
+        </ul>
+
+        <div className="mt-8">
+          {renderCta()}
+        </div>
       </div>
     </motion.div>
   );
@@ -152,7 +183,9 @@ export function Pricing() {
         className="mx-auto max-w-7xl"
       >
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="section-heading font-heading">Simple Pricing</h2>
+          <h2 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
+            Simple Pricing
+          </h2>
         </div>
 
         <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

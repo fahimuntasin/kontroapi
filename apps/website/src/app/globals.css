@@ -1,148 +1,31 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-@layer base {
-  :root {
-    --background: 240 13% 96.5%;
-    --foreground: 240 7% 7%;
-    --card: 0 0% 100% / 0.75;
-    --card-foreground: 240 7% 7%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 7% 7%;
-    --primary: 237 72% 52%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 240 10% 96%;
-    --secondary-foreground: 240 7% 15%;
-    --muted: 240 10% 96%;
-    --muted-foreground: 240 12% 40%;
-    --accent: 240 10% 96%;
-    --accent-foreground: 240 7% 15%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 237 72% 52% / 0.12;
-    --input: 240 10% 90%;
-    --ring: 237 72% 52%;
-    --radius: 0.75rem;
-    --surface: 240 10% 94%;
-    --surface-2: 240 10% 91%;
-    --accent-blue: 237 72% 52%;
-    --accent-blue-bright: 240 89% 67%;
-    --accent-blue-soft: 237 72% 52% / 0.12;
-    --accent-blue-border: 240 89% 67% / 0.25;
-  }
+@theme {
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-heading: var(--font-inter-tight), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), monospace;
 
-  .dark {
-    --background: 240 17% 7%;
-    --foreground: 240 33% 95%;
-    --card: 240 14% 10% / 0.75;
-    --card-foreground: 240 33% 95%;
-    --popover: 240 14% 10%;
-    --popover-foreground: 240 33% 95%;
-    --primary: 240 89% 67%;
-    --primary-foreground: 240 17% 7%;
-    --secondary: 240 14% 14%;
-    --secondary-foreground: 240 33% 95%;
-    --muted: 240 14% 15%;
-    --muted-foreground: 240 12% 64%;
-    --accent: 240 14% 14%;
-    --accent-foreground: 240 33% 95%;
-    --destructive: 0 73% 43%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 240 89% 67% / 0.12;
-    --input: 240 10% 16%;
-    --ring: 240 89% 67%;
-    --surface: 240 14% 11%;
-    --surface-2: 240 14% 14%;
-    --accent-blue: 240 89% 67%;
-    --accent-blue-bright: 240 89% 72%;
-    --accent-blue-soft: 240 89% 67% / 0.12;
-    --accent-blue-border: 240 89% 67% / 0.25;
-  }
+  --color-background: #030303;
+  --color-foreground: #f5f5f5;
+  --color-card: #0a0a0a;
+  --color-border: #222222;
+  --color-divider: #222222;
+  --color-default: #888888;
+  --color-primary: #0070f3;
+  --color-primary-foreground: #ffffff;
+  --color-muted: #0f0f0f;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
 }
 
-@layer base {
-  * {
-    @apply border-[hsl(var(--border))];
-  }
-  body {
-    @apply bg-background text-foreground antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1;
-  }
-  ::selection {
-    @apply bg-[#5c5ff5]/30 text-foreground;
-  }
+* { border-color: var(--color-border); }
+html { scroll-behavior: smooth; }
+body {
+  font-feature-settings: "rlig" 1, "calt" 1;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  -webkit-font-smoothing: antialiased;
 }
-
-@layer components {
-  .glass-card {
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    background: hsl(var(--card));
-    border: 1px solid hsl(var(--accent-blue-border));
-  }
-  .dark .glass-card {
-    background: hsl(240 17% 6% / 0.6);
-  }
-
-  .cta-button {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-[#3a3fd4] px-6 py-3
-           text-sm font-semibold text-white transition-all duration-200
-           hover:bg-[#5c5ff5] hover:shadow-lg hover:shadow-[#3a3fd4]/25;
-  }
-
-  .cta-button-outline {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-[#5c5ff5]/30
-           px-6 py-3 text-sm font-medium text-[#5c5ff5] transition-all duration-200
-           hover:bg-[#5c5ff5]/10;
-  }
-
-  .code-block {
-    background: hsl(var(--card));
-    border: 1px solid hsl(var(--border));
-    border-radius: var(--radius);
-    font-family: var(--font-jetbrains-mono), monospace;
-    font-size: 13px;
-    line-height: 1.7;
-  }
-
-  .section-heading {
-    @apply text-3xl font-semibold tracking-tight sm:text-4xl;
-  }
-
-  .section-subheading {
-    @apply mt-4 max-w-2xl text-lg text-muted-foreground;
-  }
-}
-
-@layer utilities {
-  .bg-grid {
-    background-image: linear-gradient(hsl(var(--border)) 1px, transparent 1px),
-                      linear-gradient(90deg, hsl(var(--border)) 1px, transparent 1px);
-    background-size: 64px 64px;
-  }
-
-  .text-gradient {
-    @apply bg-gradient-to-r from-[#3a3fd4] to-[#5c5ff5] bg-clip-text text-transparent;
-  }
-
-  .animate-fade-in {
-    animation: fadeIn 0.6s ease-out both;
-  }
-  .animate-slide-up {
-    animation: slideUp 0.6s ease-out both;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  @keyframes slideUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-}
-
-html {
-  scroll-behavior: smooth;
-}
+::selection { background: rgba(0,112,243,0.2); color: #fff; }

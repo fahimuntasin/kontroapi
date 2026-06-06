@@ -2,31 +2,20 @@
 
 import { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
-import { cn } from '@/lib/utils';
 
 const codeLines = [
   { color: 'text-gray-400', text: '$ npm install -g @kontroapis/cli' },
   { color: 'text-gray-400', text: '$ kontroapi init -y' },
-  { color: 'text-green-400', text: '  ✓ Postgres configured' },
-  { color: 'text-green-400', text: '  ✓ Redis configured' },
-  {
-    color: 'text-green-400',
-    text: '  ✓ Admin user created (save the password!)',
-  },
-  { color: 'text-green-400', text: '  ✓ docker-compose.yml generated' },
+  { color: 'text-green-400', text: '  \u2713 Postgres configured' },
+  { color: 'text-green-400', text: '  \u2713 Redis configured' },
+  { color: 'text-green-400', text: '  \u2713 docker-compose.yml generated' },
   { color: '', text: '' },
   { color: 'text-gray-400', text: '$ kontroapi start -d' },
-  { color: 'text-green-400', text: '  ✓ Engine started on :3000' },
-  { color: 'text-green-400', text: '  ✓ Dashboard started on :3001' },
+  { color: 'text-green-400', text: '  \u2713 Engine started on :3000' },
+  { color: 'text-green-400', text: '  \u2713 Dashboard started on :3001' },
   { color: '', text: '' },
-  {
-    color: 'text-gray-400',
-    text: '$ curl http://localhost:3000/health',
-  },
-  {
-    color: 'text-accent-blue-bright',
-    text: '  {"status":"ok","version":"0.1.0"}',
-  },
+  { color: 'text-gray-400', text: '$ curl http://localhost:3000/health' },
+  { color: 'text-blue-400', text: '  {"status":"ok"}' },
 ];
 
 export function CodeDemo() {
@@ -42,23 +31,20 @@ export function CodeDemo() {
         className="mx-auto max-w-3xl"
       >
         <div className="text-center">
-          <h2 className="section-heading font-heading">One Command to Deploy</h2>
+          <h2 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
+            One Command to Deploy
+          </h2>
         </div>
 
         <div className="mt-12">
-          <div
-            className={cn(
-              'glass-card overflow-hidden rounded-2xl border border-border/50',
-              'shadow-lg shadow-accent-blue/5'
-            )}
-          >
-            <div className="flex items-center gap-2 border-b border-border/40 bg-surface/80 px-4 py-3">
+          <div className="overflow-hidden rounded-xl border border-border bg-black">
+            <div className="flex items-center gap-2 border-b border-border bg-zinc-950 px-4 py-3">
               <div className="h-3 w-3 rounded-full bg-red-500/80" />
               <div className="h-3 w-3 rounded-full bg-yellow-500/80" />
               <div className="h-3 w-3 rounded-full bg-green-500/80" />
             </div>
-            <div className="overflow-x-auto bg-surface/40 p-4 sm:p-6">
-              <pre className="text-[13px] leading-7">
+            <div className="overflow-x-auto p-4 sm:p-6">
+              <pre className="font-mono text-sm leading-relaxed">
                 <code>
                   {codeLines.map((line, i) => (
                     <span key={i}>

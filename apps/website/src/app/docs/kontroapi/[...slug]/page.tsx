@@ -148,7 +148,7 @@ export default async function DocsSubPage({
         {page.content.map((paragraph, index) => (
           <p
             key={index}
-            className="text-base leading-relaxed text-muted-foreground"
+            className="text-base leading-relaxed text-default"
           >
             {paragraph}
           </p>
