@@ -7,7 +7,23 @@ const schema = z.object({
   type: z.enum(['cloudflare', 'nginx', 'manual']),
   domain: z.string().optional(),
   apiToken: z.string().optional(),
+  token: z.string().optional(),
 });
+
+async function getPublicIp(): Promise<string> {
+  try {
+    const res = await fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(5000) });
+    const data = await res.json();
+    return data.ip || 'YOUR_SERVER_IP';
+  } catch {
+    try {
+      const res = await fetch('https://ifconfig.me/ip', { signal: AbortSignal.timeout(5000) });
+      return (await res.text()).trim() || 'YOUR_SERVER_IP';
+    } catch {
+      return 'YOUR_SERVER_IP';
+    }
+  }
+}
 
 export async function POST(request: Request) {
   try {
@@ -20,7 +36,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const { type, domain, apiToken } = parsed.data;
+    const { type, domain, apiToken, token } = parsed.data;
+    const cloudflareToken = apiToken || token;
+    const serverIp = await getPublicIp();
 
     if (type === 'manual') {
       return NextResponse.json({
@@ -84,14 +102,11 @@ server {
           config,
           certbotCommand: `certbot --nginx -d ${domain}`,
           instructions: [
-            `📌 DNS: Add an A record for ${domain} → YOUR_SERVER_IP`,
+            `📌 DNS: Add an A record for ${domain} → ${serverIp}`,
             `Wait for DNS to propagate (1-5 minutes)`,
             ``,
-            `Copy the config to /etc/nginx/sites-available/${domain}`,
-            `Create symlink: ln -s /etc/nginx/sites-available/${domain} /etc/nginx/sites-enabled/`,
-            `Test config: nginx -t`,
-            `Reload nginx: systemctl reload nginx`,
-            `Run certbot: certbot --nginx -d ${domain}`,
+            `📋 Nginx config generated below — copy to your server`,
+            `Then run: certbot --nginx -d ${domain}`,
           ],
         },
       });
@@ -104,7 +119,7 @@ server {
           { status: 400 }
         );
       }
-      if (!apiToken) {
+      if (!cloudflareToken) {
         return NextResponse.json(
           { success: false, error: 'API token is required for Cloudflare setup' },
           { status: 400 }
@@ -113,7 +128,7 @@ server {
 
       try {
         const verifyRes = await fetch('https://api.cloudflare.com/client/v4/user/tokens/verify', {
-          headers: { Authorization: `Bearer ${apiToken}` },
+          headers: { Authorization: `Bearer ${cloudflareToken}` },
         });
 
         if (!verifyRes.ok) {
@@ -124,7 +139,7 @@ server {
         }
 
         const zoneRes = await fetch(`https://api.cloudflare.com/client/v4/zones?name=${domain}`, {
-          headers: { Authorization: `Bearer ${apiToken}`, 'Content-Type': 'application/json' },
+          headers: { Authorization: `Bearer ${cloudflareToken}`, 'Content-Type': 'application/json' },
         });
 
         const zoneData = await zoneRes.json();
@@ -138,7 +153,7 @@ server {
         }
 
         const accountsRes = await fetch('https://api.cloudflare.com/client/v4/accounts?page=1&per_page=1', {
-          headers: { Authorization: `Bearer ${apiToken}`, 'Content-Type': 'application/json' },
+          headers: { Authorization: `Bearer ${cloudflareToken}`, 'Content-Type': 'application/json' },
         });
 
         const accountsData = await accountsRes.json();
@@ -157,7 +172,7 @@ server {
           {
             method: 'POST',
             headers: {
-              Authorization: `Bearer ${apiToken}`,
+              Authorization: `Bearer ${cloudflareToken}`,
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({ name: tunnelName }),
@@ -181,7 +196,7 @@ server {
         const tokenRes = await fetch(
           `https://api.cloudflare.com/client/v4/accounts/${account.id}/cfd_tunnel/${tunnel.id}/token`,
           {
-            headers: { Authorization: `Bearer ${apiToken}`, 'Content-Type': 'application/json' },
+            headers: { Authorization: `Bearer ${cloudflareToken}`, 'Content-Type': 'application/json' },
           }
         );
 
@@ -193,7 +208,7 @@ server {
           {
             method: 'POST',
             headers: {
-              Authorization: `Bearer ${apiToken}`,
+              Authorization: `Bearer ${cloudflareToken}`,
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
